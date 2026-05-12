@@ -87,7 +87,9 @@ export const TodoWidget: React.FC<Props> = ({
           onBlur={() => commitDate(dateInput)}
           onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
         />
-        <div className="date-display">{prettyDate(sheet.displayDate) || <span style={{ opacity: 0.6 }}>Type a date</span>}</div>
+        <div className="date-display" title={prettyDate(sheet.displayDate) || undefined}>
+          {prettyDate(sheet.displayDate) || <span style={{ opacity: 0.6 }}>Type a date</span>}
+        </div>
         <button className="nav-btn ghost" onClick={goNext} disabled={sheetIdx <= 0} title="Newer sheet">›</button>
       </div>
       <div className="todo-list">

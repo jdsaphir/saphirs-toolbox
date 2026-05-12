@@ -39,7 +39,7 @@ export const Timer: React.FC<Props> = ({ state, setState, onClose }) => {
 
   return (
     <div className="widget timer-widget" onClick={e => e.stopPropagation()}>
-      <div className="widget-header">
+      <div className="widget-header" data-drag-handle>
         <span className="title">Timer</span>
         <div className="actions"><button className="ghost icon" onClick={onClose} title="Close">×</button></div>
       </div>

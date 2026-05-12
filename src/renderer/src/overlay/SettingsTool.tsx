@@ -64,7 +64,7 @@ export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
 
   return (
     <div className="widget settings-widget" onClick={e => e.stopPropagation()}>
-      <div className="widget-header">
+      <div className="widget-header" data-drag-handle>
         <span className="title">Settings</span>
         <div className="actions"><button className="ghost icon" onClick={onClose} title="Close">×</button></div>
       </div>

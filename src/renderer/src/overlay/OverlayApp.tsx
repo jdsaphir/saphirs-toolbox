@@ -6,6 +6,7 @@ import { ScratchpadWidget } from './ScratchpadWidget';
 import { Calculator } from './Calculator';
 import { Timer, useTimerTicker } from './Timer';
 import { SettingsTool } from './SettingsTool';
+import { DraggableWindow } from './DraggableWindow';
 import type { SheetSummary } from './SheetsDropdown';
 
 type ToolId = 'calculator' | 'timer' | 'settings' | null;
@@ -248,11 +249,15 @@ export const OverlayApp: React.FC = () => {
       </div>
 
       {activeTool && (
-        <div style={{ position: 'absolute', left: toolLeft, top: toolTop, zIndex: 50 }}>
+        <DraggableWindow
+          initialLeft={toolLeft}
+          initialTop={toolTop}
+          resetKey={activeTool}
+        >
           {activeTool === 'calculator' && <Calculator onClose={() => setActiveTool(null)} />}
           {activeTool === 'timer' && <Timer state={timerState} setState={setTimerState} onClose={() => setActiveTool(null)} />}
           {activeTool === 'settings' && <SettingsTool settings={settings} onClose={() => setActiveTool(null)} />}
-        </div>
+        </DraggableWindow>
       )}
     </div>
   );

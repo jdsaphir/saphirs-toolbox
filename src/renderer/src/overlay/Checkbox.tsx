@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CheckboxStatus, TodoItem } from '../../../shared/types';
 
 // Glyph rendering for each status. Returned as JSX so we can use multi-character glyphs.
@@ -92,44 +92,51 @@ export const StatusPalette: React.FC<{
   onChange: (item: TodoItem) => void;
   onClose: () => void;
 }> = ({ item, anchor, onChange, onClose }) => {
-  const [pos, setPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
+  // Start invisible so we don't flash at (0,0) before the layout effect runs.
+  const [pos, setPos] = useState<{ left: number; top: number; ready: boolean }>({ left: 0, top: 0, ready: false });
   const paletteRef = useRef<HTMLDivElement>(null);
+  // Stable onClose ref so the outside-click effect doesn't tear down on every parent render.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!paletteRef.current) return;
     const r = anchor.getBoundingClientRect();
-    // Default: right of the checkbox
+    const el = paletteRef.current;
+    const rect = el.getBoundingClientRect();
     let left = r.right + 6;
     let top = r.top;
-    // After mount we'll measure and clamp
-    setPos({ left, top });
+    if (left + rect.width > window.innerWidth - 8) left = Math.max(8, r.left - rect.width - 6);
+    if (top + rect.height > window.innerHeight - 8) top = Math.max(8, window.innerHeight - rect.height - 8);
+    setPos({ left, top, ready: true });
   }, [anchor]);
 
   useEffect(() => {
-    if (!paletteRef.current) return;
-    const el = paletteRef.current;
-    const rect = el.getBoundingClientRect();
-    let { left, top } = pos;
-    if (left + rect.width > window.innerWidth - 8) left = Math.max(8, window.innerWidth - rect.width - 8);
-    if (top + rect.height > window.innerHeight - 8) top = Math.max(8, window.innerHeight - rect.height - 8);
-    if (left !== pos.left || top !== pos.top) setPos({ left, top });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    function onDown(e: MouseEvent) {
+    // Defer attaching the outside-click listener by one frame, so the click
+    // that opened the palette can't immediately close it on the same tick.
+    let attached = false;
+    const onDown = (e: MouseEvent) => {
       if (!paletteRef.current) return;
-      if (!paletteRef.current.contains(e.target as Node)) onClose();
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') { e.stopPropagation(); onClose(); }
-    }
-    window.addEventListener('mousedown', onDown);
-    window.addEventListener('keydown', onKey, true);
-    return () => {
-      window.removeEventListener('mousedown', onDown);
-      window.removeEventListener('keydown', onKey, true);
+      if (paletteRef.current.contains(e.target as Node)) return;
+      if (anchor.contains(e.target as Node)) return; // clicks on the anchor toggle/reopen, not close
+      onCloseRef.current();
     };
-  }, [onClose]);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.stopPropagation(); onCloseRef.current(); }
+    };
+    const raf = requestAnimationFrame(() => {
+      window.addEventListener('mousedown', onDown);
+      window.addEventListener('keydown', onKey, true);
+      attached = true;
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      if (attached) {
+        window.removeEventListener('mousedown', onDown);
+        window.removeEventListener('keydown', onKey, true);
+      }
+    };
+  }, [anchor]);
 
   function pick(status: CheckboxStatus) {
     onChange({ ...item, status });
@@ -140,7 +147,13 @@ export const StatusPalette: React.FC<{
   }
 
   return (
-    <div ref={paletteRef} className="palette" style={{ left: pos.left, top: pos.top }} onClick={e => e.stopPropagation()}>
+    <div
+      ref={paletteRef}
+      className="palette"
+      style={{ left: pos.left, top: pos.top, visibility: pos.ready ? 'visible' : 'hidden' }}
+      onClick={e => e.stopPropagation()}
+      onMouseDown={e => e.stopPropagation()}
+    >
       <div className="palette-section">
         <div className="label">Status</div>
         {STATUS_LIST.map(s => (

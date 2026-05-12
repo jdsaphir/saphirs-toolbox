@@ -4,11 +4,14 @@ type Op = '+' | '-' | '×' | '÷';
 
 interface Props { onClose: () => void; }
 
+interface HistoryEntry { expr: string; result: string; }
+
 export const Calculator: React.FC<Props> = ({ onClose }) => {
   const [display, setDisplay] = useState('0');
   const [acc, setAcc] = useState<number | null>(null);
   const [pendingOp, setPendingOp] = useState<Op | null>(null);
   const [history, setHistory] = useState('');
+  const [pastEntries, setPastEntries] = useState<HistoryEntry[]>([]);
   const [justEvaluated, setJustEvaluated] = useState(false);
 
   function inputDigit(d: string) {
@@ -75,8 +78,10 @@ export const Calculator: React.FC<Props> = ({ onClose }) => {
     if (acc === null || pendingOp === null) return;
     const cur = parseFloat(display);
     const r = applyOp(acc, cur, pendingOp);
-    setHistory(`${formatNum(acc)} ${pendingOp} ${formatNum(cur)} =`);
+    const expr = `${formatNum(acc)} ${pendingOp} ${formatNum(cur)}`;
+    setHistory(`${expr} =`);
     setDisplay(formatNum(r));
+    setPastEntries(prev => [{ expr, result: formatNum(r) }, ...prev].slice(0, 20));
     setAcc(null);
     setPendingOp(null);
     setJustEvaluated(true);
@@ -122,14 +127,41 @@ export const Calculator: React.FC<Props> = ({ onClose }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [acc, pendingOp, display, justEvaluated, replaceOnNext]);
 
+  function recall(entry: HistoryEntry) {
+    setDisplay(entry.result);
+    setAcc(null);
+    setPendingOp(null);
+    setHistory(`${entry.expr} =`);
+    setJustEvaluated(true);
+    setReplaceOnNext(false);
+  }
+
+  function clearHistory() {
+    setPastEntries([]);
+  }
+
   return (
     <div className="widget calc-widget" onClick={e => e.stopPropagation()}>
-      <div className="widget-header">
+      <div className="widget-header" data-drag-handle>
         <span className="title">Calculator</span>
         <div className="actions">
+          {pastEntries.length > 0 && (
+            <button className="ghost icon" onClick={clearHistory} title="Clear history">⌫</button>
+          )}
           <button className="ghost icon" onClick={onClose} title="Close">×</button>
         </div>
       </div>
+      {pastEntries.length > 0 && (
+        <div className="calc-past">
+          {pastEntries.map((e, i) => (
+            <div key={i} className="calc-past-entry" onClick={() => recall(e)} title="Click to recall result">
+              <span className="calc-past-expr">{e.expr}</span>
+              <span className="calc-past-eq">=</span>
+              <span className="calc-past-result">{e.result}</span>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="calc-display">
         <div className="calc-history">{history}&nbsp;</div>
         <div className="calc-value">{display}</div>

@@ -7,15 +7,17 @@ const DUOTONE_EYE = 'M216 208C216 194.7 226.7 184 240 184C253.3 184 264 194.7 26
 
 export const DolphinIcon: React.FC<{ variant: DolphinIconVariant; className?: string }> = ({ variant, className }) => {
   if (variant === 'duotone') {
+    // Lightened body + brighter eye gives a clearly different look at small
+    // sizes than the flat solid version below.
     return (
-      <svg className={className} viewBox="0 0 640 640" xmlns="http://www.w3.org/2000/svg">
-        <path opacity="0.4" d={DUOTONE_BODY} />
-        <path d={DUOTONE_EYE} />
+      <svg className={className} viewBox="0 0 640 640" xmlns="http://www.w3.org/2000/svg" data-variant="duotone">
+        <path opacity="0.35" d={DUOTONE_BODY} />
+        <path d={DUOTONE_EYE} fill="#ffffff" opacity="1" />
       </svg>
     );
   }
   return (
-    <svg className={className} viewBox="0 0 640 640" xmlns="http://www.w3.org/2000/svg">
+    <svg className={className} viewBox="0 0 640 640" xmlns="http://www.w3.org/2000/svg" data-variant="solid">
       <path d={SOLID_PATH} />
     </svg>
   );
