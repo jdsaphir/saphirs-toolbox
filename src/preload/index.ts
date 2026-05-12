@@ -45,6 +45,14 @@ const api = {
     ipcRenderer.on(IPC.TimerTick, listener);
     return () => ipcRenderer.removeListener(IPC.TimerTick, listener);
   },
+
+  // App control
+  quitApp: () => ipcRenderer.invoke(IPC.AppQuit) as Promise<boolean>,
+  onOpenSettingsTab: (cb: () => void) => {
+    const listener = () => cb();
+    ipcRenderer.on(IPC.OpenSettingsTab, listener);
+    return () => ipcRenderer.removeListener(IPC.OpenSettingsTab, listener);
+  },
 };
 
 contextBridge.exposeInMainWorld('toolbox', api);

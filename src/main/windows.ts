@@ -7,6 +7,18 @@ const DEV_URL = 'http://localhost:5173';
 
 const DOLPHIN_SIZE = 72; // px; includes some breathing room around the icon
 
+function iconPath(): string {
+  // Look for the .ico in dev (project root/assets) and packaged (resources) locations.
+  const candidates = [
+    path.join(__dirname, '../../assets/icon.ico'),
+    path.join(process.resourcesPath || '', 'assets', 'icon.ico'),
+  ];
+  for (const p of candidates) {
+    try { if (require('fs').existsSync(p)) return p; } catch { /* ignore */ }
+  }
+  return candidates[0];
+}
+
 let dolphinWindow: BrowserWindow | null = null;
 let overlayWindow: BrowserWindow | null = null;
 
@@ -46,6 +58,7 @@ export function createDolphinWindow(): BrowserWindow {
     alwaysOnTop: true,
     hasShadow: false,
     focusable: true,
+    icon: iconPath(),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -77,6 +90,7 @@ export function createOverlayWindow(): BrowserWindow {
     alwaysOnTop: true,
     hasShadow: false,
     show: false,
+    icon: iconPath(),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,

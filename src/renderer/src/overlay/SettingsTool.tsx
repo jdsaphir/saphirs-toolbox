@@ -103,6 +103,15 @@ export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
           <option value="right">Always expand right</option>
         </select>
       </div>
+
+      <div className="field" style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+        <button
+          onClick={() => { if (confirm("Quit Saphir's Toolbox?")) api.quitApp(); }}
+          style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
+        >
+          Quit Saphir's Toolbox
+        </button>
+      </div>
     </div>
   );
 };

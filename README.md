@@ -36,14 +36,19 @@ Corner notches combine with any status:
 - **Bottom-right**: Follow up
 - **Bottom-left**: Canceled
 
-## Development
+## Run & build
 
 ```sh
 npm install
 npm run dev     # vite + electron with hot reload
-npm start       # production-style: compile, then run
-npm run build   # produce installer in dist/
+npm start       # compile, then run electron
+npm run icon    # regenerate assets/icon.ico and assets/tray.png from the SVG
+npm run build   # produce a portable .exe in dist/ (no installer, no taskbar entry)
 ```
+
+The portable build produces `dist/SaphirsToolbox.exe` — a single self-contained executable. Drop it anywhere (Desktop, a tools folder, pinned to Start) and double-click to launch. No installation required.
+
+The app lives in the system tray. Right-click the tray icon for Open / Hide / Settings / Quit, or click the dolphin to toggle the toolbox. There is also a Quit button at the bottom of the Settings panel.
 
 Data lives in SQLite at `%APPDATA%/saphirs-toolbox/toolbox.db`.
 
@@ -52,3 +57,9 @@ Data lives in SQLite at `%APPDATA%/saphirs-toolbox/toolbox.db`.
 - Electron 33 (main + preload + two renderer windows: dolphin and overlay)
 - Vite + React + TypeScript
 - `better-sqlite3` for persistence
+- `@resvg/resvg-js` + `to-ico` to rasterize the dolphin SVG into a multi-resolution `.ico`
+
+## Roadmap / not yet built
+
+- **Auto-update.** Wire `electron-updater` against GitHub Releases once the app stabilizes. Each tagged release publishes a new portable build; running instances check on launch and offer to update.
+- More tools: unit converter, color picker, clipboard history, regex tester, JSON formatter, world clock.

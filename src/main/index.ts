@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, globalShortcut, ipcMain, screen } from 'ele
 import fs from 'fs';
 import path from 'path';
 import { IPC } from '../shared/ipc';
+import { createTray } from './tray';
 import {
   createSheet,
   deleteSheet,
@@ -58,6 +59,12 @@ function closeOverlayAndNotify() {
   broadcast(IPC.ToolboxState, { open: false });
 }
 
+function quitApp() {
+  // Unregister shortcuts and let the app exit cleanly
+  if (registeredShortcut) globalShortcut.unregister(registeredShortcut);
+  app.quit();
+}
+
 function broadcast<T>(channel: string, payload: T) {
   for (const w of BrowserWindow.getAllWindows()) {
     w.webContents.send(channel, payload);
@@ -71,6 +78,16 @@ app.whenReady().then(() => {
   createDolphinWindow();
   createOverlayWindow();
   registerShortcut(settings.shortcut);
+
+  createTray({
+    onToggleToolbox: () => toggleOverlay(),
+    onOpenSettings: () => {
+      openOverlay();
+      const ov = getOverlayWindow();
+      ov?.webContents.send(IPC.OpenSettingsTab);
+    },
+    onQuit: () => quitApp(),
+  });
 
   // ── Toolbox ────────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.ToolboxToggle, () => {
@@ -162,6 +179,12 @@ app.whenReady().then(() => {
   ipcMain.on(IPC.TimerBroadcast, (_e, state) => {
     const dolphin = getDolphinWindow();
     dolphin?.webContents.send(IPC.TimerTick, state);
+  });
+
+  // ── App control ────────────────────────────────────────────────────────────
+  ipcMain.handle(IPC.AppQuit, () => {
+    quitApp();
+    return true;
   });
 
   app.on('activate', () => {

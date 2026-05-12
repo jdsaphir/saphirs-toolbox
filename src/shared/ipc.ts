@@ -32,4 +32,8 @@ export const IPC = {
   // Timer (renderer -> main for the pill broadcast)
   TimerBroadcast: 'timer:broadcast',
   TimerTick: 'timer:tick', // main -> dolphin renderer
+
+  // App control
+  AppQuit: 'app:quit',
+  OpenSettingsTab: 'app:open-settings', // main -> overlay renderer
 } as const;
