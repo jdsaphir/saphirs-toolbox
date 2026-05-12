@@ -20,7 +20,6 @@ import {
   dolphinMove,
   dolphinMoveEnd,
   dolphinMoveStart,
-  getDolphinScreenCenter,
   getDolphinWindow,
   getOverlayWindow,
   hideOverlay,
@@ -48,10 +47,10 @@ function toggleOverlay() {
 }
 
 function openOverlay() {
-  const dolphinCenter = getDolphinScreenCenter();
-  showOverlay();
-  // Tell renderers (dolphin + overlay) where the dolphin is and that it's open
-  broadcast(IPC.ToolboxState, { open: true, dolphinCenter });
+  const { center } = showOverlay();
+  // Tell renderers (dolphin + overlay) the overlay is open and where the
+  // dolphin sits in the overlay's local coordinate space.
+  broadcast(IPC.ToolboxState, { open: true, dolphinCenter: center });
 }
 
 function closeOverlayAndNotify() {

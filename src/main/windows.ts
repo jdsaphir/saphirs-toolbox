@@ -105,14 +105,28 @@ export function createOverlayWindow(): BrowserWindow {
   return overlayWindow;
 }
 
-export function showOverlay(): void {
+export function showOverlay(): { center: { x: number; y: number } } {
   if (!overlayWindow) createOverlayWindow();
   const w = overlayWindow!;
-  // Resize to match current primary display in case it changed
-  const display = screen.getPrimaryDisplay().workArea;
-  w.setBounds({ x: display.x, y: display.y, width: display.width, height: display.height });
+
+  // Pick the display that contains the dolphin (multi-monitor support).
+  let display = screen.getPrimaryDisplay();
+  if (dolphinWindow) {
+    const [dx, dy] = dolphinWindow.getPosition();
+    const [dw, dh] = dolphinWindow.getSize();
+    display = screen.getDisplayMatching({ x: dx, y: dy, width: dw, height: dh });
+  }
+  const wa = display.workArea;
+  w.setBounds({ x: wa.x, y: wa.y, width: wa.width, height: wa.height });
+
+  // Translate the dolphin's absolute screen center into display-local coords
+  // so the renderer can lay out against window.innerWidth/Height.
+  const abs = getDolphinScreenCenter();
+  const localCenter = { x: abs.x - wa.x, y: abs.y - wa.y };
+
   w.show();
   w.focus();
+  return { center: localCenter };
 }
 
 export function hideOverlay(): void {

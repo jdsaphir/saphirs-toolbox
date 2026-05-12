@@ -110,105 +110,127 @@ export const OverlayApp: React.FC = () => {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, activeTool, close]);
 
-  // Layout: position the cluster relative to dolphin position
+  // Layout: position the cluster relative to dolphin position.
+  // dolphinCenter is in overlay-local coords (main process translates from
+  // absolute screen coords when picking the display), so comparisons against
+  // window.innerWidth/Height work on any monitor.
   const layout = useMemo(() => {
     if (!dolphinCenter || !settings) return null;
-    const screenW = window.innerWidth;
-    const screenH = window.innerHeight;
+
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const PADDING = 16;
+    const DOLPHIN_HALF = 36;
+    const TOOLBAR_H = 48;
+    const CLUSTER_W = 730; // todo (360) + gap (10) + scratchpad (360)
+    const GAP = 10;
+
+    // Horizontal side: 'right' means the cluster (toolbar + widgets) grows
+    // rightward from the dolphin (so dolphin is on the LEFT half). 'left'
+    // means it grows leftward (dolphin on the RIGHT half).
     let side: 'left' | 'right';
     if (settings.toolboxSide === 'left') side = 'left';
     else if (settings.toolboxSide === 'right') side = 'right';
-    else side = dolphinCenter.x > screenW / 2 ? 'left' : 'right';
-    return { side, screenW, screenH };
+    else side = dolphinCenter.x > W / 2 ? 'left' : 'right';
+
+    // Cluster horizontal position (the widgets row and toolbar share this band).
+    let clusterLeft: number;
+    if (side === 'right') {
+      clusterLeft = Math.max(PADDING, dolphinCenter.x + DOLPHIN_HALF + 8);
+      if (clusterLeft + CLUSTER_W > W - PADDING) clusterLeft = Math.max(PADDING, W - CLUSTER_W - PADDING);
+    } else {
+      const rightEdge = Math.min(W - PADDING, dolphinCenter.x - DOLPHIN_HALF - 8);
+      clusterLeft = Math.max(PADDING, rightEdge - CLUSTER_W);
+    }
+    const clusterRight = clusterLeft + CLUSTER_W;
+
+    // Toolbar vertically aligned with the dolphin's center.
+    let toolbarTop = dolphinCenter.y - TOOLBAR_H / 2;
+    toolbarTop = Math.max(PADDING, Math.min(toolbarTop, H - TOOLBAR_H - PADDING));
+
+    // Widgets go above the toolbar if there's more room above, else below.
+    const spaceAbove = toolbarTop - PADDING;
+    const spaceBelow = H - (toolbarTop + TOOLBAR_H) - PADDING;
+    const widgetsAbove = spaceAbove >= spaceBelow;
+
+    return {
+      side, W, H, PADDING, DOLPHIN_HALF, TOOLBAR_H, CLUSTER_W, GAP,
+      clusterLeft, clusterRight, toolbarTop, widgetsAbove, spaceAbove, spaceBelow,
+    };
   }, [dolphinCenter, settings]);
 
   if (!open || !sheet || !settings || !layout) return <div className="overlay-root" onClick={close} />;
 
-  // Compute cluster position. Anchor near the dolphin's vertical center,
-  // extending up (todo+scratchpad above the toolbar) and to the opposite side
-  // from where the toolbar grows.
-  const DOLPHIN_HALF = 36;
-  const TOOLBAR_HEIGHT = 48;
-  const clusterMaxWidth = 730; // todo (360) + gap (10) + scratchpad (360)
-  const padding = 16;
+  const L = layout;
 
-  // Toolbar row sits at the dolphin's vertical position
-  // todo+scratchpad row sits above the toolbar
-  const toolbarTop = Math.min(layout.screenH - TOOLBAR_HEIGHT - padding, Math.max(padding, (dolphinCenter!.y) - TOOLBAR_HEIGHT / 2));
-  let leftAnchor: number;
-  if (layout.side === 'right') {
-    // Toolbar grows right from dolphin
-    leftAnchor = Math.max(padding, dolphinCenter!.x + DOLPHIN_HALF + 8);
-    if (leftAnchor + clusterMaxWidth > layout.screenW - padding) {
-      leftAnchor = Math.max(padding, layout.screenW - clusterMaxWidth - padding);
-    }
+  // Widgets row — intrinsic height; anchored by `bottom` when above the
+  // toolbar, `top` when below. The widgetsAbove/below choice already picks
+  // the side with the most room.
+  const widgetsStyle: React.CSSProperties = L.widgetsAbove
+    ? { position: 'absolute', left: L.clusterLeft, width: L.CLUSTER_W, bottom: L.H - L.toolbarTop + L.GAP }
+    : { position: 'absolute', left: L.clusterLeft, width: L.CLUSTER_W, top: L.toolbarTop + L.TOOLBAR_H + L.GAP };
+
+  // Toolbar — anchored at the dolphin-side edge of the cluster.
+  const toolbarStyle: React.CSSProperties = L.side === 'right'
+    ? { position: 'absolute', left: L.clusterLeft, top: L.toolbarTop }
+    : { position: 'absolute', right: L.W - L.clusterRight, top: L.toolbarTop };
+
+  // Active tool — appears beside the toolbar buttons, growing away from the
+  // dolphin, vertically aligned with the toolbar. If the tool would overflow
+  // the screen, it nudges back inside via the clamp below.
+  const TOOL_W = 240;
+  const TOOL_OFFSET = 160; // approximate width of the toolbar buttons row + gap
+  let toolLeft: number;
+  if (L.side === 'right') {
+    toolLeft = Math.min(L.W - TOOL_W - L.PADDING, L.clusterLeft + TOOL_OFFSET);
   } else {
-    // Toolbar grows left from dolphin; right edge of cluster aligned near dolphin
-    const rightEdge = Math.min(layout.screenW - padding, dolphinCenter!.x - DOLPHIN_HALF - 8);
-    leftAnchor = Math.max(padding, rightEdge - clusterMaxWidth);
+    toolLeft = Math.max(L.PADDING, L.clusterRight - TOOL_OFFSET - TOOL_W);
   }
+  // Vertically: try to align so the tool sits above the toolbar if widgets are
+  // below, and below the toolbar if widgets are above.
+  const toolTop = L.widgetsAbove
+    ? Math.min(L.H - 360 - L.PADDING, L.toolbarTop + L.TOOLBAR_H + L.GAP)
+    : Math.max(L.PADDING, L.toolbarTop - 360 - L.GAP);
 
-  const clusterStyle: React.CSSProperties = {
-    left: leftAnchor,
-    top: padding,
-    width: clusterMaxWidth,
-    height: layout.screenH - 2 * padding,
-    justifyContent: 'flex-end', // pin to bottom relative to toolbarTop
-  };
-  // Use absolute positioning for the toolbar row anchored to dolphin vertical center
-  // and stack the widgets row above it.
-  const toolbarStyle: React.CSSProperties = {
-    position: 'absolute',
-    left: leftAnchor,
-    top: toolbarTop,
-    width: clusterMaxWidth,
-  };
-  const widgetsRowStyle: React.CSSProperties = {
-    position: 'absolute',
-    left: leftAnchor,
-    top: padding,
-    width: clusterMaxWidth,
-    height: toolbarTop - padding - 10,
-  };
+  const renderWidgets = () => (
+    L.side === 'right' ? (
+      <>
+        <TodoWidget
+          sheet={sheet}
+          sheets={sheets}
+          checkboxMode={settings.checkboxMode}
+          onChange={persistSheet}
+          onSelectSheet={selectSheet}
+          onCreateSheet={createSheet}
+          onDeleteSheet={deleteSheet}
+        />
+        <ScratchpadWidget value={sheet.scratchpad} onChange={v => persistSheet({ ...sheet, scratchpad: v })} />
+      </>
+    ) : (
+      <>
+        <ScratchpadWidget value={sheet.scratchpad} onChange={v => persistSheet({ ...sheet, scratchpad: v })} />
+        <TodoWidget
+          sheet={sheet}
+          sheets={sheets}
+          checkboxMode={settings.checkboxMode}
+          onChange={persistSheet}
+          onSelectSheet={selectSheet}
+          onCreateSheet={createSheet}
+          onDeleteSheet={deleteSheet}
+        />
+      </>
+    )
+  );
 
   return (
     <div className="overlay-root" onClick={close}>
-      <div style={widgetsRowStyle}>
-        <div className="widget-row" style={{ height: '100%', alignItems: 'stretch' }}>
-          {/* When toolbar grows right (dolphin on the left), put scratchpad on the right (further from dolphin) */}
-          {layout.side === 'right' ? (
-            <>
-              <TodoWidget
-                sheet={sheet}
-                sheets={sheets}
-                checkboxMode={settings.checkboxMode}
-                onChange={persistSheet}
-                onSelectSheet={selectSheet}
-                onCreateSheet={createSheet}
-                onDeleteSheet={deleteSheet}
-              />
-              <ScratchpadWidget value={sheet.scratchpad} onChange={v => persistSheet({ ...sheet, scratchpad: v })} />
-            </>
-          ) : (
-            <>
-              <ScratchpadWidget value={sheet.scratchpad} onChange={v => persistSheet({ ...sheet, scratchpad: v })} />
-              <TodoWidget
-                sheet={sheet}
-                sheets={sheets}
-                checkboxMode={settings.checkboxMode}
-                onChange={persistSheet}
-                onSelectSheet={selectSheet}
-                onCreateSheet={createSheet}
-                onDeleteSheet={deleteSheet}
-              />
-            </>
-          )}
-        </div>
+      <div style={widgetsStyle}>
+        <div className="widget-row">{renderWidgets()}</div>
       </div>
 
       <div style={toolbarStyle}>
         <div
-          className={`widget toolbar ${layout.side === 'left' ? 'right-anchored' : ''}`}
+          className="widget toolbar"
           onClick={e => e.stopPropagation()}
           style={{ display: 'inline-flex', padding: 6 }}
         >
@@ -225,16 +247,8 @@ export const OverlayApp: React.FC = () => {
         </div>
       </div>
 
-      {/* Active tool floats centered between cluster and screen edge */}
       {activeTool && (
-        <div
-          style={{
-            position: 'absolute',
-            left: layout.side === 'right' ? leftAnchor : Math.max(padding, leftAnchor - 240),
-            top: Math.max(padding, toolbarTop - 360),
-            zIndex: 50,
-          }}
-        >
+        <div style={{ position: 'absolute', left: toolLeft, top: toolTop, zIndex: 50 }}>
           {activeTool === 'calculator' && <Calculator onClose={() => setActiveTool(null)} />}
           {activeTool === 'timer' && <Timer state={timerState} setState={setTimerState} onClose={() => setActiveTool(null)} />}
           {activeTool === 'settings' && <SettingsTool settings={settings} onClose={() => setActiveTool(null)} />}
