@@ -1,0 +1,463 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   Saphir's Toolbox — shared renderer styles
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --bg-widget: rgba(20, 28, 42, 0.92);
+  --bg-widget-soft: rgba(28, 38, 56, 0.92);
+  --border: rgba(120, 170, 230, 0.25);
+  --text: #e6edf6;
+  --text-dim: #9aa8bd;
+  --text-comment: #6e7a8e;
+  --accent: #5fb4ff;
+  --accent-dim: #3a7bb8;
+  --danger: #ff6b6b;
+  --warning: #ffb347;
+  --important: #ffd166;
+  --success: #6ee7a0;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.transparent-body {
+  background: transparent !important;
+  overflow: hidden;
+  user-select: none;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+button:hover { background: rgba(120, 170, 230, 0.12); }
+button:active { background: rgba(120, 170, 230, 0.22); }
+button.primary { background: var(--accent-dim); border-color: var(--accent); }
+button.primary:hover { background: var(--accent); }
+button.ghost { border-color: transparent; }
+button.icon { padding: 4px 6px; line-height: 1; }
+
+input[type="text"], input[type="date"], textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
+  outline: none;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+
+/* ───────────────────────────── Dolphin window ────────────────────────────── */
+
+.dolphin-root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  -webkit-user-select: none;
+}
+
+.timer-pill {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--bg-widget);
+  border: 1px solid var(--border);
+  margin-bottom: 4px;
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  white-space: nowrap;
+}
+.timer-pill.running { border-color: var(--success); color: var(--success); }
+.timer-pill.break { border-color: var(--warning); color: var(--warning); }
+.timer-pill.paused { color: var(--text-dim); }
+
+.dolphin-button {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+  transition: transform 0.15s ease;
+}
+.dolphin-button:hover { transform: scale(1.05); }
+.dolphin-button:active { cursor: grabbing; transform: scale(0.95); }
+.dolphin-button svg {
+  width: 100%;
+  height: 100%;
+  fill: var(--accent);
+}
+.dolphin-button.open svg { fill: var(--success); }
+
+/* ────────────────────────────── Overlay layout ───────────────────────────── */
+
+.overlay-root {
+  position: fixed;
+  inset: 0;
+  display: block;
+  /* The root catches clicks on transparent areas → close. Widgets stop propagation. */
+}
+
+.widget-cluster {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* The cluster wraps the todo+scratchpad row and the toolbar row.
+     Positioned by JS relative to the dolphin button. */
+}
+
+.widget-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.widget {
+  background: var(--bg-widget);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+  padding: 8px;
+}
+
+.widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.widget-header .title { color: var(--text); text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; }
+.widget-header .actions { display: flex; gap: 4px; }
+
+/* ───────────────────────────── Todo widget ───────────────────────────────── */
+
+.todo-widget {
+  width: 360px;
+}
+
+.todo-date-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.todo-date-row .date-input { flex: 0 0 100px; }
+.todo-date-row .date-display { flex: 1; color: var(--text-dim); font-size: 12px; }
+.todo-date-row .nav-btn { padding: 2px 6px; }
+
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.todo-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 2px;
+  border-radius: 4px;
+}
+.todo-row:hover { background: rgba(255, 255, 255, 0.03); }
+.todo-row.dragging { opacity: 0.4; }
+.todo-row.drag-over { background: rgba(95, 180, 255, 0.12); }
+
+.todo-handle {
+  width: 12px;
+  height: 16px;
+  color: var(--text-comment);
+  cursor: grab;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+.todo-row:hover .todo-handle { opacity: 1; }
+.todo-handle:active { cursor: grabbing; }
+
+.todo-text {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dotted transparent;
+  padding: 2px 0;
+  color: var(--text);
+  font-size: 13px;
+  min-width: 0;
+}
+.todo-text:focus { border-bottom-color: var(--accent); }
+.todo-text.comment { color: var(--text-comment); font-style: italic; }
+.todo-text.important { font-weight: 600; color: var(--important); }
+.todo-text.canceled { text-decoration: line-through; color: var(--text-comment); }
+.todo-text.done { color: var(--text-dim); }
+
+/* Custom checkbox */
+.checkbox {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border: 1.5px solid var(--text-dim);
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.2);
+  transition: border-color 0.12s;
+}
+.checkbox:hover { border-color: var(--accent); }
+.checkbox .glyph { font-weight: 700; }
+
+/* Corner notches: small triangles in each corner */
+.checkbox .notch {
+  position: absolute;
+  width: 0; height: 0;
+  border-style: solid;
+}
+.checkbox .notch.tl {
+  top: -1px; left: -1px;
+  border-width: 6px 6px 0 0;
+  border-color: var(--warning) transparent transparent transparent;
+}
+.checkbox .notch.tr {
+  top: -1px; right: -1px;
+  border-width: 0 6px 6px 0;
+  border-color: transparent var(--accent) transparent transparent;
+}
+.checkbox .notch.br {
+  bottom: -1px; right: -1px;
+  border-width: 0 0 6px 6px;
+  border-color: transparent transparent var(--warning) transparent;
+}
+.checkbox .notch.bl {
+  bottom: -1px; left: -1px;
+  border-width: 6px 0 0 6px;
+  border-color: transparent transparent transparent var(--danger);
+}
+
+/* Glyph styles per status */
+.checkbox.done { border-color: var(--success); color: var(--success); }
+.checkbox.in_progress { border-color: var(--accent); color: var(--accent); }
+.checkbox.meeting { border-color: var(--accent); color: var(--accent); }
+.checkbox.deferred { color: var(--warning); border-color: var(--warning); }
+.checkbox.delegated { color: var(--warning); border-color: var(--warning); }
+.checkbox.important { color: var(--important); border-color: var(--important); }
+.checkbox.comment { color: var(--text-comment); border-color: var(--text-comment); }
+.checkbox.chevron_up, .checkbox.chevron_down { color: var(--text-dim); border-color: var(--text-dim); }
+.checkbox.circle { color: var(--text-dim); border-color: var(--text-dim); }
+
+/* Status palette popover */
+.palette {
+  position: absolute;
+  z-index: 1000;
+  background: var(--bg-widget-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+  min-width: 220px;
+}
+.palette-section { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+.palette-section .label { grid-column: 1 / -1; color: var(--text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+.palette-cell {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.2);
+}
+.palette-cell:hover { border-color: var(--accent); }
+.palette-cell.active { border-color: var(--accent); background: rgba(95, 180, 255, 0.15); }
+.palette-toggle-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.palette-toggle {
+  font-size: 10px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  text-align: center;
+}
+.palette-toggle.active { background: var(--accent-dim); border-color: var(--accent); }
+
+/* ─────────────────────────── Scratchpad widget ───────────────────────────── */
+
+.scratchpad-widget {
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+}
+.scratchpad-widget textarea {
+  flex: 1;
+  min-height: 320px;
+  resize: none;
+  font-family: 'Consolas', 'Cascadia Mono', 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* ─────────────────────────────── Toolbar ─────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+}
+.toolbar.right-anchored { flex-direction: row-reverse; }
+.toolbar-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+.toolbar-btn:hover { background: rgba(120, 170, 230, 0.18); }
+.toolbar-btn.active { background: var(--accent-dim); border-color: var(--accent); }
+
+/* ─────────────────────────────── Calculator ──────────────────────────────── */
+
+.calc-widget {
+  width: 220px;
+  padding: 8px;
+}
+.calc-display {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+  padding: 8px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 6px;
+  min-height: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.calc-history { font-size: 11px; color: var(--text-dim); min-height: 13px; }
+.calc-value { font-size: 22px; font-weight: 500; word-break: break-all; }
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.calc-btn {
+  height: 36px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.calc-btn:hover { background: rgba(120, 170, 230, 0.18); }
+.calc-btn.op { color: var(--accent); }
+.calc-btn.equals { background: var(--accent-dim); border-color: var(--accent); }
+.calc-btn.equals:hover { background: var(--accent); }
+.calc-btn.clear { color: var(--danger); }
+.calc-btn.span2 { grid-column: span 2; }
+
+/* ───────────────────────────── Timer widget ──────────────────────────────── */
+
+.timer-widget { width: 220px; }
+.timer-display { font-size: 28px; font-variant-numeric: tabular-nums; text-align: center; margin: 8px 0; }
+.timer-mode-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 6px; }
+.timer-mode-row button.active { background: var(--accent-dim); border-color: var(--accent); }
+.timer-controls { display: flex; gap: 4px; justify-content: center; }
+.timer-controls button { min-width: 60px; }
+.timer-set-row { display: flex; gap: 4px; align-items: center; margin-bottom: 6px; }
+.timer-set-row input { width: 50px; text-align: center; }
+
+/* ──────────────────────────── Settings widget ────────────────────────────── */
+
+.settings-widget { width: 340px; }
+.settings-widget .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.settings-widget .field label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ─────────────────────────────── Sheets dropdown ─────────────────────────── */
+
+.sheets-dropdown {
+  position: absolute;
+  z-index: 1100;
+  background: var(--bg-widget-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 6px;
+  min-width: 260px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.sheets-dropdown .sheet-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.sheets-dropdown .sheet-item:hover { background: rgba(120, 170, 230, 0.15); }
+.sheets-dropdown .sheet-item.active { background: rgba(95, 180, 255, 0.18); }
+.sheets-dropdown .sheet-item .label-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sheets-dropdown .sheet-item .del { color: var(--danger); font-size: 14px; padding: 0 4px; opacity: 0; }
+.sheets-dropdown .sheet-item:hover .del { opacity: 1; }
+.sheets-dropdown .new-sheet { color: var(--accent); border-top: 1px solid var(--border); margin-top: 4px; padding-top: 8px; }
+
+/* ───────────────────────────────── Misc ──────────────────────────────────── */
+
+.spacer { flex: 1; }
+.kbd { font-family: monospace; background: rgba(0,0,0,0.3); padding: 1px 4px; border-radius: 3px; border: 1px solid var(--border); font-size: 11px; }

@@ -1,0 +1,54 @@
+{
+  "name": "saphirs-toolbox",
+  "version": "0.1.0",
+  "description": "A floating dolphin-shaped widget toolbox for Windows. A to-do sheet, scratchpad, calculator, and timer — always one click away, without the browser bulk.",
+  "main": "dist-main/main/index.js",
+  "author": "Saphir",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development concurrently -k -n VITE,ELECTRON -c blue,magenta \"npm:dev:renderer\" \"npm:dev:main\"",
+    "dev:renderer": "vite",
+    "dev:main": "wait-on tcp:5173 && tsc -p tsconfig.main.json && electron .",
+    "compile": "tsc -p tsconfig.main.json && vite build",
+    "start": "npm run compile && electron .",
+    "build": "tsc -p tsconfig.main.json && vite build && electron-builder",
+    "build:dir": "tsc -p tsconfig.main.json && vite build && electron-builder --dir",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.6.0",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "concurrently": "^9.0.1",
+    "cross-env": "^7.0.3",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.saphir.toolbox",
+    "productName": "Saphir's Toolbox",
+    "files": [
+      "dist-main/**/*",
+      "dist-renderer/**/*",
+      "assets/**/*"
+    ],
+    "directories": {
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  }
+}
