@@ -174,21 +174,25 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .todo-date-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 .todo-date-row .date-input {
-  flex: 1;
-  padding: 3px 6px;
-  font-size: 12px;
+  flex: 0 0 70px;
+  padding: 2px 4px;
+  font-size: 11px;
+  text-align: center;
 }
-.todo-date-row .nav-btn { padding: 2px 6px; }
-
-/* Pretty date on its own line below — full width so it doesn't truncate. */
-.date-display {
+.todo-date-row .nav-btn {
+  padding: 2px 5px;
+  flex: 0 0 auto;
+}
+.todo-date-row .nav-btn:disabled { opacity: 0.3; cursor: default; }
+.todo-date-row .date-display {
+  flex: 1;
+  min-width: 0;
   color: var(--text-dim);
-  font-size: 12px;
-  margin-bottom: 6px;
+  font-size: 11px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

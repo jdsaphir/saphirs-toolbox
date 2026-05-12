@@ -77,7 +77,7 @@ export const TodoWidget: React.FC<Props> = ({
         />
       )}
       <div className="todo-date-row">
-        <button className="nav-btn ghost" onClick={goPrev} disabled={sheetIdx < 0 || sheetIdx === sheets.length - 1} title="Older sheet">‹</button>
+        <button className="nav-btn ghost" onClick={goPrev} disabled={sheetIdx < 0 || sheetIdx === sheets.length - 1} title={sheetIdx < 0 || sheetIdx === sheets.length - 1 ? 'No older sheet' : 'Older sheet'}>‹</button>
         <input
           className="date-input"
           type="text"
@@ -87,10 +87,10 @@ export const TodoWidget: React.FC<Props> = ({
           onBlur={() => commitDate(dateInput)}
           onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
         />
-        <button className="nav-btn ghost" onClick={goNext} disabled={sheetIdx <= 0} title="Newer sheet">›</button>
-      </div>
-      <div className="date-display" title={prettyDate(sheet.displayDate) || undefined}>
-        {prettyDate(sheet.displayDate) || <span style={{ opacity: 0.6 }}>Type a date</span>}
+        <div className="date-display" title={prettyDate(sheet.displayDate) || undefined}>
+          {prettyDate(sheet.displayDate) || <span style={{ opacity: 0.6 }}>Type a date</span>}
+        </div>
+        <button className="nav-btn ghost" onClick={goNext} disabled={sheetIdx <= 0} title={sheetIdx <= 0 ? 'No newer sheet' : 'Newer sheet'}>›</button>
       </div>
       <div className="todo-list">
         {sheet.todos.map((t, i) => (

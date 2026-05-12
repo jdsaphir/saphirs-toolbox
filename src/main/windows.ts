@@ -75,6 +75,13 @@ export function createDolphinWindow(): BrowserWindow {
 
   dolphinWindow.loadURL(pageUrl('dolphin.html'));
   if (DEV) dolphinWindow.webContents.openDevTools({ mode: 'detach' });
+  // Allow opening DevTools in production for debugging (F12 or Ctrl+Shift+I).
+  dolphinWindow.webContents.on('before-input-event', (_e, input) => {
+    if (input.type !== 'keyDown') return;
+    if (input.key === 'F12' || (input.control && input.shift && input.key.toLowerCase() === 'i')) {
+      dolphinWindow!.webContents.toggleDevTools();
+    }
+  });
   return dolphinWindow;
 }
 
@@ -112,6 +119,12 @@ export function createOverlayWindow(): BrowserWindow {
   overlayWindow.setMenu(null);
   overlayWindow.loadURL(pageUrl('overlay.html'));
   if (DEV) overlayWindow.webContents.openDevTools({ mode: 'detach' });
+  overlayWindow.webContents.on('before-input-event', (_e, input) => {
+    if (input.type !== 'keyDown') return;
+    if (input.key === 'F12' || (input.control && input.shift && input.key.toLowerCase() === 'i')) {
+      overlayWindow!.webContents.toggleDevTools();
+    }
+  });
   return overlayWindow;
 }
 

@@ -73,6 +73,22 @@ function broadcast<T>(channel: string, payload: T) {
 // Name shown in Task Manager / window menus.
 app.setName("Saphir's Toolbox");
 
+// Ensure only one instance can run at a time. If a second is launched, focus
+// the existing dolphin so the user sees the running app instead of two.
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    const dw = getDolphinWindow();
+    if (dw) {
+      if (dw.isMinimized()) dw.restore();
+      dw.show();
+      dw.focus();
+    }
+  });
+}
+
 app.whenReady().then(() => {
   initDb();
   const settings = getSettings();

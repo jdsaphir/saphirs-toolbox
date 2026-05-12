@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { CheckboxStatus, TodoItem } from '../../../shared/types';
 
 // Glyph rendering for each status. Returned as JSX so we can use multi-character glyphs.
@@ -50,12 +51,17 @@ export const Checkbox: React.FC<{
 }> = ({ item, mode, onChange, onOpenPalette }) => {
   const ref = useRef<HTMLDivElement>(null);
 
-  function handleClick(e: React.MouseEvent) {
+  // Handle on mousedown rather than click. The window-level mousedown listener
+  // attached by an open palette/dropdown would otherwise fire before our click
+  // event lands, potentially eating it. Using mousedown here makes the
+  // sequence: our handler fires first, opens the palette, the new palette's
+  // listener is then attached (deferred by rAF inside StatusPalette).
+  function handleMouseDown(e: React.MouseEvent) {
+    if (e.button !== 0) return;
     e.stopPropagation();
     if (mode === 'palette') {
       if (ref.current) onOpenPalette(ref.current);
     } else {
-      // cycle
       const idx = CYCLE_ORDER.indexOf(item.status);
       const next = CYCLE_ORDER[(idx + 1) % CYCLE_ORDER.length] ?? 'empty';
       onChange({ ...item, status: next });
@@ -73,7 +79,7 @@ export const Checkbox: React.FC<{
     <div
       ref={ref}
       className={`checkbox ${item.status}`}
-      onClick={handleClick}
+      onMouseDown={handleMouseDown}
       onContextMenu={handleContextMenu}
       title={STATUS_LABEL[item.status]}
     >
@@ -92,33 +98,38 @@ export const StatusPalette: React.FC<{
   onChange: (item: TodoItem) => void;
   onClose: () => void;
 }> = ({ item, anchor, onChange, onClose }) => {
-  // Start invisible so we don't flash at (0,0) before the layout effect runs.
-  const [pos, setPos] = useState<{ left: number; top: number; ready: boolean }>({ left: 0, top: 0, ready: false });
+  // Compute initial position synchronously from the anchor so the palette
+  // paints in the right place on first render (no flash at 0,0). The
+  // post-mount layout effect can refine if it overflows the viewport.
+  const initialRect = anchor.getBoundingClientRect();
+  const [pos, setPos] = useState<{ left: number; top: number }>(() => ({
+    left: initialRect.right + 6,
+    top: initialRect.top,
+  }));
   const paletteRef = useRef<HTMLDivElement>(null);
-  // Stable onClose ref so the outside-click effect doesn't tear down on every parent render.
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
   useLayoutEffect(() => {
     if (!paletteRef.current) return;
     const r = anchor.getBoundingClientRect();
-    const el = paletteRef.current;
-    const rect = el.getBoundingClientRect();
+    const rect = paletteRef.current.getBoundingClientRect();
     let left = r.right + 6;
     let top = r.top;
     if (left + rect.width > window.innerWidth - 8) left = Math.max(8, r.left - rect.width - 6);
     if (top + rect.height > window.innerHeight - 8) top = Math.max(8, window.innerHeight - rect.height - 8);
-    setPos({ left, top, ready: true });
+    if (left !== pos.left || top !== pos.top) setPos({ left, top });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anchor]);
 
   useEffect(() => {
-    // Defer attaching the outside-click listener by one frame, so the click
-    // that opened the palette can't immediately close it on the same tick.
+    // Use mousedown in capture phase, deferred by one frame so the same-tick
+    // event that opened the palette can't close it.
     let attached = false;
     const onDown = (e: MouseEvent) => {
       if (!paletteRef.current) return;
       if (paletteRef.current.contains(e.target as Node)) return;
-      if (anchor.contains(e.target as Node)) return; // clicks on the anchor toggle/reopen, not close
+      if (anchor.contains(e.target as Node)) return;
       onCloseRef.current();
     };
     const onKey = (e: KeyboardEvent) => {
@@ -146,13 +157,16 @@ export const StatusPalette: React.FC<{
     onChange({ ...item, [key]: !item[key] } as TodoItem);
   }
 
-  return (
+  // Render via a portal so the palette is a direct child of document.body —
+  // no ancestor positioning context, no z-index inheritance, no overflow:hidden
+  // clipping can interfere with where it appears.
+  return createPortal(
     <div
       ref={paletteRef}
       className="palette"
-      style={{ left: pos.left, top: pos.top, visibility: pos.ready ? 'visible' : 'hidden' }}
-      onClick={e => e.stopPropagation()}
+      style={{ left: pos.left, top: pos.top }}
       onMouseDown={e => e.stopPropagation()}
+      onClick={e => e.stopPropagation()}
     >
       <div className="palette-section">
         <div className="label">Status</div>
@@ -178,6 +192,7 @@ export const StatusPalette: React.FC<{
           <div className={`palette-toggle ${item.followUp ? 'active' : ''}`} onClick={() => toggle('followUp')} title="Bottom-right: Follow up">◢ Follow up</div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
