@@ -1,21 +1,25 @@
 // Shared types between main and renderer processes.
 
-export type CheckboxStatus =
-  | 'empty'
-  | 'in_progress'
-  | 'done'
-  | 'meeting'
-  | 'deferred'
-  | 'delegated'
-  | 'important'
-  | 'comment'
-  | 'chevron_up'
-  | 'chevron_down'
-  | 'circle';
+// Progress is mutually exclusive: a task is either to-do (empty),
+// in progress (forward slash), or done (check mark).
+export type ProgressState = 'empty' | 'in_progress' | 'done';
 
+// Type flags layer freely on top of progress. A meeting can be in progress;
+// an important task can also be deferred; etc. The renderer draws each active
+// flag as an SVG stroke inside the box.
 export interface TodoItem {
   text: string;
-  status: CheckboxStatus;
+  progress: ProgressState;
+  // Combinable type flags
+  meeting: boolean;
+  deferred: boolean;
+  delegated: boolean;
+  important: boolean;
+  comment: boolean;
+  chevronUp: boolean;
+  chevronDown: boolean;
+  circle: boolean;
+  // Corner notches
   personal: boolean;       // top-right notch
   followUp: boolean;       // bottom-right notch
   canceled: boolean;       // bottom-left notch
@@ -55,7 +59,15 @@ export interface TimerState {
 
 export const EMPTY_TODO: TodoItem = {
   text: '',
-  status: 'empty',
+  progress: 'empty',
+  meeting: false,
+  deferred: false,
+  delegated: false,
+  important: false,
+  comment: false,
+  chevronUp: false,
+  chevronDown: false,
+  circle: false,
   personal: false,
   followUp: false,
   canceled: false,

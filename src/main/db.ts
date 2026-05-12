@@ -39,7 +39,15 @@ export function initDb(): void {
       sheet_id    INTEGER NOT NULL,
       position    INTEGER NOT NULL,
       text        TEXT NOT NULL DEFAULT '',
-      status      TEXT NOT NULL DEFAULT 'empty',
+      progress    TEXT NOT NULL DEFAULT 'empty',
+      meeting       INTEGER NOT NULL DEFAULT 0,
+      deferred      INTEGER NOT NULL DEFAULT 0,
+      delegated     INTEGER NOT NULL DEFAULT 0,
+      important     INTEGER NOT NULL DEFAULT 0,
+      comment       INTEGER NOT NULL DEFAULT 0,
+      chevron_up    INTEGER NOT NULL DEFAULT 0,
+      chevron_down  INTEGER NOT NULL DEFAULT 0,
+      circle        INTEGER NOT NULL DEFAULT 0,
       personal    INTEGER NOT NULL DEFAULT 0,
       follow_up   INTEGER NOT NULL DEFAULT 0,
       canceled    INTEGER NOT NULL DEFAULT 0,
@@ -48,6 +56,48 @@ export function initDb(): void {
       FOREIGN KEY (sheet_id) REFERENCES sheets(id) ON DELETE CASCADE
     );
   `);
+
+  migrateTodosToCombinableStatuses();
+}
+
+// Migrate the todos table from the single-value `status` enum to the new
+// progress + per-flag column model. Runs idempotently on every startup.
+function migrateTodosToCombinableStatuses(): void {
+  const cols = db.prepare('PRAGMA table_info(todos)').all() as Array<{ name: string }>;
+  const have = new Set(cols.map(c => c.name));
+
+  const addCol = (name: string, type: string, def: string) => {
+    if (!have.has(name)) {
+      db.exec(`ALTER TABLE todos ADD COLUMN ${name} ${type} NOT NULL DEFAULT ${def}`);
+      have.add(name);
+    }
+  };
+
+  addCol('progress', 'TEXT', "'empty'");
+  addCol('meeting', 'INTEGER', '0');
+  addCol('deferred', 'INTEGER', '0');
+  addCol('delegated', 'INTEGER', '0');
+  addCol('important', 'INTEGER', '0');
+  addCol('comment', 'INTEGER', '0');
+  addCol('chevron_up', 'INTEGER', '0');
+  addCol('chevron_down', 'INTEGER', '0');
+  addCol('circle', 'INTEGER', '0');
+
+  // If the legacy `status` column still exists, fold its value into the new
+  // columns. The legacy column is left in place (SQLite ALTER TABLE can drop
+  // columns only in 3.35+; cheap to leave it untouched).
+  if (have.has('status')) {
+    db.exec(`UPDATE todos SET progress = 'in_progress' WHERE status = 'in_progress' AND progress = 'empty'`);
+    db.exec(`UPDATE todos SET progress = 'done' WHERE status = 'done' AND progress = 'empty'`);
+    db.exec(`UPDATE todos SET meeting = 1 WHERE status = 'meeting' AND meeting = 0`);
+    db.exec(`UPDATE todos SET deferred = 1 WHERE status = 'deferred' AND deferred = 0`);
+    db.exec(`UPDATE todos SET delegated = 1 WHERE status = 'delegated' AND delegated = 0`);
+    db.exec(`UPDATE todos SET important = 1 WHERE status = 'important' AND important = 0`);
+    db.exec(`UPDATE todos SET comment = 1 WHERE status = 'comment' AND comment = 0`);
+    db.exec(`UPDATE todos SET chevron_up = 1 WHERE status = 'chevron_up' AND chevron_up = 0`);
+    db.exec(`UPDATE todos SET chevron_down = 1 WHERE status = 'chevron_down' AND chevron_down = 0`);
+    db.exec(`UPDATE todos SET circle = 1 WHERE status = 'circle' AND circle = 0`);
+  }
 }
 
 // ── Settings ─────────────────────────────────────────────────────────────────
@@ -92,14 +142,26 @@ function rowToSheet(row: any, todos: TodoItem[]): Sheet {
 
 function loadTodos(sheetId: number): TodoItem[] {
   const rows = db
-    .prepare('SELECT position, text, status, personal, follow_up, canceled, optional FROM todos WHERE sheet_id = ? ORDER BY position ASC')
+    .prepare(
+      `SELECT position, text, progress, meeting, deferred, delegated, important, comment,
+              chevron_up, chevron_down, circle, personal, follow_up, canceled, optional
+       FROM todos WHERE sheet_id = ? ORDER BY position ASC`
+    )
     .all(sheetId) as any[];
   const todos: TodoItem[] = Array.from({ length: TODOS_PER_SHEET }, () => ({ ...EMPTY_TODO }));
   for (const r of rows) {
     if (r.position >= 0 && r.position < TODOS_PER_SHEET) {
       todos[r.position] = {
         text: r.text,
-        status: r.status,
+        progress: (r.progress ?? 'empty') as TodoItem['progress'],
+        meeting: !!r.meeting,
+        deferred: !!r.deferred,
+        delegated: !!r.delegated,
+        important: !!r.important,
+        comment: !!r.comment,
+        chevronUp: !!r.chevron_up,
+        chevronDown: !!r.chevron_down,
+        circle: !!r.circle,
         personal: !!r.personal,
         followUp: !!r.follow_up,
         canceled: !!r.canceled,
@@ -149,11 +211,22 @@ export function updateSheet(sheet: Sheet): Sheet {
     .run(sheet.title, sheet.displayDate, sheet.scratchpad, now, sheet.id);
 
   const upTodo = db.prepare(
-    'UPDATE todos SET text=?, status=?, personal=?, follow_up=?, canceled=?, optional=? WHERE sheet_id=? AND position=?'
+    `UPDATE todos SET
+       text = ?, progress = ?,
+       meeting = ?, deferred = ?, delegated = ?, important = ?, comment = ?,
+       chevron_up = ?, chevron_down = ?, circle = ?,
+       personal = ?, follow_up = ?, canceled = ?, optional = ?
+     WHERE sheet_id = ? AND position = ?`
   );
   const tx = db.transaction((s: Sheet) => {
     s.todos.forEach((t, i) => {
-      upTodo.run(t.text, t.status, t.personal ? 1 : 0, t.followUp ? 1 : 0, t.canceled ? 1 : 0, t.optional ? 1 : 0, s.id, i);
+      upTodo.run(
+        t.text, t.progress,
+        t.meeting ? 1 : 0, t.deferred ? 1 : 0, t.delegated ? 1 : 0, t.important ? 1 : 0, t.comment ? 1 : 0,
+        t.chevronUp ? 1 : 0, t.chevronDown ? 1 : 0, t.circle ? 1 : 0,
+        t.personal ? 1 : 0, t.followUp ? 1 : 0, t.canceled ? 1 : 0, t.optional ? 1 : 0,
+        s.id, i
+      );
     });
   });
   tx(sheet);

@@ -1,47 +1,26 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { CheckboxStatus, TodoItem } from '../../../shared/types';
+import type { ProgressState, TodoItem } from '../../../shared/types';
+import { GLYPH_KEYS, GLYPH_LABEL, GlyphKey, renderGlyph } from './CheckboxGlyphs';
 
-// Glyph rendering for each status. Returned as JSX so we can use multi-character glyphs.
-export function statusGlyph(s: CheckboxStatus): React.ReactNode {
-  switch (s) {
-    case 'empty': return null;
-    case 'in_progress': return <span className="glyph">/</span>;
-    case 'done': return <span className="glyph">✓</span>;
-    case 'meeting': return <span className="glyph" style={{ fontSize: 14 }}>—</span>;
-    case 'deferred': return <span className="glyph">›</span>;
-    case 'delegated': return <span className="glyph">‹</span>;
-    case 'important': return <span className="glyph">|</span>;
-    case 'comment': return <span className="glyph" style={{ fontSize: 10, letterSpacing: -1 }}>//</span>;
-    case 'chevron_up': return <span className="glyph">^</span>;
-    case 'chevron_down': return <span className="glyph">v</span>;
-    case 'circle': return <span className="glyph">○</span>;
-  }
+// Maps a TodoItem to the set of glyphs that should be drawn inside its box.
+function todoGlyphs(t: TodoItem): GlyphKey[] {
+  const out: GlyphKey[] = [];
+  if (t.progress === 'in_progress') out.push('in_progress');
+  if (t.progress === 'done') out.push('done');
+  if (t.meeting) out.push('meeting');
+  if (t.deferred) out.push('deferred');
+  if (t.delegated) out.push('delegated');
+  if (t.important) out.push('important');
+  if (t.comment) out.push('comment');
+  if (t.chevronUp) out.push('chevron_up');
+  if (t.chevronDown) out.push('chevron_down');
+  if (t.circle) out.push('circle');
+  return out;
 }
 
-export const STATUS_LIST: CheckboxStatus[] = [
-  'empty', 'in_progress', 'done',
-  'meeting', 'deferred', 'delegated',
-  'important', 'comment', 'circle',
-  'chevron_up', 'chevron_down',
-];
-
-export const STATUS_LABEL: Record<CheckboxStatus, string> = {
-  empty: 'To do',
-  in_progress: 'In progress',
-  done: 'Done',
-  meeting: 'Meeting / call',
-  deferred: 'Deferred',
-  delegated: 'Delegated',
-  important: 'Important',
-  comment: 'Comment',
-  chevron_up: 'Chevron up (reserved)',
-  chevron_down: 'Chevron down (reserved)',
-  circle: 'Circle (reserved)',
-};
-
-// Common statuses for click-cycle mode
-const CYCLE_ORDER: CheckboxStatus[] = ['empty', 'in_progress', 'done'];
+// Cycle order for the click-to-cycle interaction mode: empty → / → ✓ → empty.
+const CYCLE: ProgressState[] = ['empty', 'in_progress', 'done'];
 
 export const Checkbox: React.FC<{
   item: TodoItem;
@@ -50,40 +29,60 @@ export const Checkbox: React.FC<{
   onOpenPalette: (anchor: HTMLElement) => void;
 }> = ({ item, mode, onChange, onOpenPalette }) => {
   const ref = useRef<HTMLDivElement>(null);
+  const glyphs = todoGlyphs(item);
 
-  // Handle on mousedown rather than click. The window-level mousedown listener
-  // attached by an open palette/dropdown would otherwise fire before our click
-  // event lands, potentially eating it. Using mousedown here makes the
-  // sequence: our handler fires first, opens the palette, the new palette's
-  // listener is then attached (deferred by rAF inside StatusPalette).
   function handleMouseDown(e: React.MouseEvent) {
     if (e.button !== 0) return;
     e.stopPropagation();
     if (mode === 'palette') {
       if (ref.current) onOpenPalette(ref.current);
     } else {
-      const idx = CYCLE_ORDER.indexOf(item.status);
-      const next = CYCLE_ORDER[(idx + 1) % CYCLE_ORDER.length] ?? 'empty';
-      onChange({ ...item, status: next });
+      const idx = CYCLE.indexOf(item.progress);
+      const next = CYCLE[(idx + 1) % CYCLE.length] ?? 'empty';
+      onChange({ ...item, progress: next });
     }
   }
 
   function handleContextMenu(e: React.MouseEvent) {
-    // Right-click always opens the palette regardless of mode
     e.preventDefault();
     e.stopPropagation();
     if (ref.current) onOpenPalette(ref.current);
   }
 
+  const titleParts: string[] = [];
+  if (item.progress === 'empty' && glyphs.length === 0) titleParts.push('To do');
+  if (item.progress === 'in_progress') titleParts.push('In progress');
+  if (item.progress === 'done') titleParts.push('Done');
+  if (item.meeting) titleParts.push('Meeting');
+  if (item.deferred) titleParts.push('Deferred');
+  if (item.delegated) titleParts.push('Delegated');
+  if (item.important) titleParts.push('Important');
+  if (item.comment) titleParts.push('Comment');
+  if (item.chevronUp) titleParts.push('Chevron up');
+  if (item.chevronDown) titleParts.push('Chevron down');
+  if (item.circle) titleParts.push('Circle');
+
+  // Border/color cue: prefer "done" green if done; in-progress blue if in progress;
+  // important amber otherwise; fall back to the dim default.
+  let stateClass = '';
+  if (item.progress === 'done') stateClass = 'done';
+  else if (item.progress === 'in_progress') stateClass = 'in_progress';
+  else if (item.important) stateClass = 'important';
+  else if (item.comment) stateClass = 'comment';
+
   return (
     <div
       ref={ref}
-      className={`checkbox ${item.status}`}
+      className={`checkbox ${stateClass}`}
       onMouseDown={handleMouseDown}
       onContextMenu={handleContextMenu}
-      title={STATUS_LABEL[item.status]}
+      title={titleParts.join(' · ')}
     >
-      {statusGlyph(item.status)}
+      <svg viewBox="0 0 16 16" width="100%" height="100%">
+        {glyphs.map(k => (
+          <React.Fragment key={k}>{renderGlyph(k)}</React.Fragment>
+        ))}
+      </svg>
       {item.optional && <span className="notch tl" />}
       {item.personal && <span className="notch tr" />}
       {item.followUp && <span className="notch br" />}
@@ -92,15 +91,14 @@ export const Checkbox: React.FC<{
   );
 };
 
+// ── Palette ─────────────────────────────────────────────────────────────────
+
 export const StatusPalette: React.FC<{
   item: TodoItem;
   anchor: HTMLElement;
   onChange: (item: TodoItem) => void;
   onClose: () => void;
 }> = ({ item, anchor, onChange, onClose }) => {
-  // Compute initial position synchronously from the anchor so the palette
-  // paints in the right place on first render (no flash at 0,0). The
-  // post-mount layout effect can refine if it overflows the viewport.
   const initialRect = anchor.getBoundingClientRect();
   const [pos, setPos] = useState<{ left: number; top: number }>(() => ({
     left: initialRect.right + 6,
@@ -123,8 +121,6 @@ export const StatusPalette: React.FC<{
   }, [anchor]);
 
   useEffect(() => {
-    // Use mousedown in capture phase, deferred by one frame so the same-tick
-    // event that opened the palette can't close it.
     let attached = false;
     const onDown = (e: MouseEvent) => {
       if (!paletteRef.current) return;
@@ -149,17 +145,26 @@ export const StatusPalette: React.FC<{
     };
   }, [anchor]);
 
-  function pick(status: CheckboxStatus) {
-    onChange({ ...item, status });
-    onClose();
+  function setProgress(p: ProgressState) {
+    onChange({ ...item, progress: p });
   }
-  function toggle<K extends keyof TodoItem>(key: K) {
+  function toggleFlag(key: keyof TodoItem) {
     onChange({ ...item, [key]: !item[key] } as TodoItem);
   }
 
-  // Render via a portal so the palette is a direct child of document.body —
-  // no ancestor positioning context, no z-index inheritance, no overflow:hidden
-  // clipping can interfere with where it appears.
+  // Combinable flag definitions for the palette (excluding the mutually-exclusive
+  // progress states which get their own row).
+  const FLAG_DEFS: Array<{ key: keyof TodoItem; glyph: GlyphKey }> = [
+    { key: 'meeting', glyph: 'meeting' },
+    { key: 'deferred', glyph: 'deferred' },
+    { key: 'delegated', glyph: 'delegated' },
+    { key: 'important', glyph: 'important' },
+    { key: 'comment', glyph: 'comment' },
+    { key: 'chevronUp', glyph: 'chevron_up' },
+    { key: 'chevronDown', glyph: 'chevron_down' },
+    { key: 'circle', glyph: 'circle' },
+  ];
+
   return createPortal(
     <div
       ref={paletteRef}
@@ -169,30 +174,59 @@ export const StatusPalette: React.FC<{
       onClick={e => e.stopPropagation()}
     >
       <div className="palette-section">
-        <div className="label">Status</div>
-        {STATUS_LIST.map(s => (
-          <div
-            key={s}
-            className={`palette-cell ${item.status === s ? 'active' : ''}`}
-            title={STATUS_LABEL[s]}
-            onClick={() => pick(s)}
-          >
-            <div className={`checkbox ${s}`} style={{ width: 22, height: 22 }}>
-              {statusGlyph(s)}
-            </div>
-          </div>
-        ))}
+        <div className="label">Progress</div>
+        <div className="palette-row">
+          <PaletteCell active={item.progress === 'empty'} onClick={() => setProgress('empty')} title="To do" />
+          <PaletteCell active={item.progress === 'in_progress'} onClick={() => setProgress('in_progress')} title="In progress" glyphs={['in_progress']} />
+          <PaletteCell active={item.progress === 'done'} onClick={() => setProgress('done')} title="Done" glyphs={['done']} />
+        </div>
       </div>
       <div className="palette-section">
-        <div className="label">Corner notches</div>
-        <div className="palette-toggle-row" style={{ gridColumn: '1 / -1' }}>
-          <div className={`palette-toggle ${item.optional ? 'active' : ''}`} onClick={() => toggle('optional')} title="Top-left: Optional">◤ Optional</div>
-          <div className={`palette-toggle ${item.personal ? 'active' : ''}`} onClick={() => toggle('personal')} title="Top-right: Personal">◥ Personal</div>
-          <div className={`palette-toggle ${item.canceled ? 'active' : ''}`} onClick={() => toggle('canceled')} title="Bottom-left: Canceled">◣ Canceled</div>
-          <div className={`palette-toggle ${item.followUp ? 'active' : ''}`} onClick={() => toggle('followUp')} title="Bottom-right: Follow up">◢ Follow up</div>
+        <div className="label">Flags (combine freely)</div>
+        <div className="palette-row palette-row-wide">
+          {FLAG_DEFS.map(d => (
+            <PaletteCell
+              key={d.key}
+              active={Boolean(item[d.key])}
+              onClick={() => toggleFlag(d.key)}
+              title={GLYPH_LABEL[d.glyph]}
+              glyphs={[d.glyph]}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="palette-section">
+        <div className="label">Notches</div>
+        <div className="palette-toggle-row">
+          <div className={`palette-toggle ${item.optional ? 'active' : ''}`} onClick={() => toggleFlag('optional')} title="Top-left: Optional">◤ Optional</div>
+          <div className={`palette-toggle ${item.personal ? 'active' : ''}`} onClick={() => toggleFlag('personal')} title="Top-right: Personal">◥ Personal</div>
+          <div className={`palette-toggle ${item.canceled ? 'active' : ''}`} onClick={() => toggleFlag('canceled')} title="Bottom-left: Canceled">◣ Canceled</div>
+          <div className={`palette-toggle ${item.followUp ? 'active' : ''}`} onClick={() => toggleFlag('followUp')} title="Bottom-right: Follow up">◢ Follow up</div>
         </div>
       </div>
     </div>,
     document.body
   );
 };
+
+const PaletteCell: React.FC<{
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  glyphs?: GlyphKey[];
+}> = ({ active, onClick, title, glyphs }) => (
+  <div className={`palette-cell ${active ? 'active' : ''}`} title={title} onClick={onClick}>
+    <div className="checkbox" style={{ width: 26, height: 26 }}>
+      {glyphs && glyphs.length > 0 && (
+        <svg viewBox="0 0 16 16" width="100%" height="100%">
+          {glyphs.map(g => (
+            <React.Fragment key={g}>{renderGlyph(g)}</React.Fragment>
+          ))}
+        </svg>
+      )}
+    </div>
+  </div>
+);
+
+// Re-exports kept for any older imports.
+export { GLYPH_KEYS, GLYPH_LABEL };

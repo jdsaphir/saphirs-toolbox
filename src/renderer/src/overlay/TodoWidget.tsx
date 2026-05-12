@@ -127,7 +127,7 @@ export const TodoWidget: React.FC<Props> = ({
               onOpenPalette={anchor => setPalette({ idx: i, anchor })}
             />
             <input
-              className={`todo-text ${t.status === 'comment' ? 'comment' : ''} ${t.status === 'important' ? 'important' : ''} ${t.canceled ? 'canceled' : ''} ${t.status === 'done' ? 'done' : ''}`}
+              className={`todo-text ${t.comment ? 'comment' : ''} ${t.important ? 'important' : ''} ${t.canceled ? 'canceled' : ''} ${t.progress === 'done' ? 'done' : ''}`}
               type="text"
               value={t.text}
               onChange={e => updateTodo(i, { ...t, text: e.target.value })}

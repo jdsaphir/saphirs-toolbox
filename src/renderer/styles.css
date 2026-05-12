@@ -178,9 +178,9 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
   margin-bottom: 8px;
 }
 .todo-date-row .date-input {
-  flex: 0 0 70px;
-  padding: 2px 4px;
-  font-size: 11px;
+  flex: 0 0 60px;
+  padding: 2px 3px;
+  font-size: 10px;
   text-align: center;
 }
 .todo-date-row .nav-btn {
@@ -247,7 +247,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .todo-text.canceled { text-decoration: line-through; color: var(--text-comment); }
 .todo-text.done { color: var(--text-dim); }
 
-/* Custom checkbox */
+/* Custom checkbox — renders an SVG of layered glyph strokes plus optional
+   corner notches. The current text color drives the SVG via currentColor. */
 .checkbox {
   position: relative;
   width: 18px;
@@ -256,17 +257,13 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
   border: 1.5px solid var(--text-dim);
   border-radius: 3px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  line-height: 1;
   color: var(--text);
   background: rgba(0, 0, 0, 0.2);
-  transition: border-color 0.12s;
+  transition: border-color 0.12s, color 0.12s;
+  overflow: visible;
 }
 .checkbox:hover { border-color: var(--accent); }
-.checkbox .glyph { font-weight: 700; }
+.checkbox svg { display: block; width: 100%; height: 100%; }
 
 /* Corner notches: small triangles in each corner */
 .checkbox .notch {
@@ -295,20 +292,16 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
   border-color: transparent transparent transparent var(--danger);
 }
 
-/* Glyph styles per status */
+/* Border/stroke color by dominant status. Multiple glyphs may be drawn but
+   the box's hue follows progress (done > in_progress) then a few key flags. */
 .checkbox.done { border-color: var(--success); color: var(--success); }
 .checkbox.in_progress { border-color: var(--accent); color: var(--accent); }
-.checkbox.meeting { border-color: var(--accent); color: var(--accent); }
-.checkbox.deferred { color: var(--warning); border-color: var(--warning); }
-.checkbox.delegated { color: var(--warning); border-color: var(--warning); }
 .checkbox.important { color: var(--important); border-color: var(--important); }
 .checkbox.comment { color: var(--text-comment); border-color: var(--text-comment); }
-.checkbox.chevron_up, .checkbox.chevron_down { color: var(--text-dim); border-color: var(--text-dim); }
-.checkbox.circle { color: var(--text-dim); border-color: var(--text-dim); }
 
-/* Status palette popover — uses fixed positioning so the coords from
-   getBoundingClientRect() in the renderer match the visual placement,
-   regardless of how many positioned ancestors wrap it. */
+/* Status palette popover. Rendered via React portal directly into body so
+   no ancestor positioning/backdrop-filter can shift it; uses fixed positioning
+   in viewport coords. */
 .palette {
   position: fixed;
   z-index: 1000;
@@ -316,35 +309,47 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 8px;
-  display: grid;
-  gap: 6px;
-  min-width: 220px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 260px;
 }
-.palette-section { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
-.palette-section .label { grid-column: 1 / -1; color: var(--text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+.palette-section { display: flex; flex-direction: column; gap: 6px; }
+.palette-section .label {
+  color: var(--text-dim);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.palette-row { display: flex; gap: 6px; }
+.palette-row-wide { flex-wrap: wrap; }
 .palette-cell {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   background: rgba(0, 0, 0, 0.2);
+  padding: 4px;
 }
 .palette-cell:hover { border-color: var(--accent); }
-.palette-cell.active { border-color: var(--accent); background: rgba(95, 180, 255, 0.15); }
-.palette-toggle-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.palette-cell.active { border-color: var(--accent); background: rgba(95, 180, 255, 0.18); }
+/* Within a palette cell, the inner mini-checkbox shouldn't be clickable on its own. */
+.palette-cell .checkbox { pointer-events: none; }
+
+.palette-toggle-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
 .palette-toggle {
-  font-size: 10px;
-  padding: 4px 6px;
+  font-size: 11px;
+  padding: 5px 8px;
   border: 1px solid var(--border);
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.2);
   cursor: pointer;
-  text-align: center;
+  text-align: left;
 }
 .palette-toggle.active { background: var(--accent-dim); border-color: var(--accent); }
 
