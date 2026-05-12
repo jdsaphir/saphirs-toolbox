@@ -1,7 +1,7 @@
 {
   "name": "saphirs-toolbox",
   "version": "0.1.0",
-  "description": "A floating dolphin-shaped widget toolbox for Windows. A to-do sheet, scratchpad, calculator, and timer — always one click away, without the browser bulk.",
+  "description": "Saphir's Toolbox",
   "main": "dist-main/main/index.js",
   "author": "Saphir",
   "license": "MIT",

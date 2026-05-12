@@ -174,24 +174,25 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .todo-date-row {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-bottom: 8px;
+  gap: 6px;
+  margin-bottom: 4px;
 }
 .todo-date-row .date-input {
-  flex: 0 0 76px;
-  padding: 2px 4px;
+  flex: 1;
+  padding: 3px 6px;
   font-size: 12px;
 }
-.todo-date-row .date-display {
-  flex: 1;
-  min-width: 0;
+.todo-date-row .nav-btn { padding: 2px 6px; }
+
+/* Pretty date on its own line below — full width so it doesn't truncate. */
+.date-display {
   color: var(--text-dim);
-  font-size: 11px;
+  font-size: 12px;
+  margin-bottom: 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.todo-date-row .nav-btn { padding: 2px 5px; }
 
 .todo-list {
   display: flex;
@@ -301,9 +302,11 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .checkbox.chevron_up, .checkbox.chevron_down { color: var(--text-dim); border-color: var(--text-dim); }
 .checkbox.circle { color: var(--text-dim); border-color: var(--text-dim); }
 
-/* Status palette popover */
+/* Status palette popover — uses fixed positioning so the coords from
+   getBoundingClientRect() in the renderer match the visual placement,
+   regardless of how many positioned ancestors wrap it. */
 .palette {
-  position: absolute;
+  position: fixed;
   z-index: 1000;
   background: var(--bg-widget-soft);
   border: 1px solid var(--border);
@@ -471,7 +474,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 /* ─────────────────────────────── Sheets dropdown ─────────────────────────── */
 
 .sheets-dropdown {
-  position: absolute;
+  position: fixed;
   z-index: 1100;
   background: var(--bg-widget-soft);
   border: 1px solid var(--border);

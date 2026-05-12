@@ -53,9 +53,10 @@ export const DolphinApp: React.FC = () => {
     window.addEventListener('mouseup', onUp);
   }
 
-  function handlePillClick() {
-    // Open toolbox and switch to timer tool (overlay handles routing)
-    if (!open) api.openToolbox();
+  function handlePillClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    // Ask the overlay to open AND switch to the timer tool.
+    api.requestOpenTool('timer');
   }
 
   const pillClass = (() => {

@@ -45,7 +45,8 @@ export const OverlayApp: React.FC = () => {
       }
     });
     const off3 = api.onOpenSettingsTab(() => setActiveTool('settings'));
-    return () => { off1(); off2(); off3(); };
+    const off4 = api.onOpenToolTab((tool) => setActiveTool(tool));
+    return () => { off1(); off2(); off3(); off4(); };
   }, []);
 
   // Run the timer tick regardless of overlay visibility

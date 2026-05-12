@@ -59,14 +59,19 @@ export function createDolphinWindow(): BrowserWindow {
     hasShadow: false,
     focusable: true,
     icon: iconPath(),
+    title: "Saphir's Toolbox",
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      // Keep IPC + setInterval working even when this window is occluded
+      // by the (always-on-top) overlay. Without this, the timer pill freezes.
+      backgroundThrottling: false,
     },
   });
   dolphinWindow.setAlwaysOnTop(true, 'screen-saver');
+  dolphinWindow.setTitle("Saphir's Toolbox");
 
   dolphinWindow.loadURL(pageUrl('dolphin.html'));
   if (DEV) dolphinWindow.webContents.openDevTools({ mode: 'detach' });
@@ -91,14 +96,19 @@ export function createOverlayWindow(): BrowserWindow {
     hasShadow: false,
     show: false,
     icon: iconPath(),
+    title: "Saphir's Toolbox",
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      // Keep the timer setInterval and IPC running smoothly even when the
+      // overlay is hidden between toolbox sessions.
+      backgroundThrottling: false,
     },
   });
   overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+  overlayWindow.setTitle("Saphir's Toolbox");
   overlayWindow.setMenu(null);
   overlayWindow.loadURL(pageUrl('overlay.html'));
   if (DEV) overlayWindow.webContents.openDevTools({ mode: 'detach' });

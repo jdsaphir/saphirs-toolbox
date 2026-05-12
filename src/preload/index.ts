@@ -53,6 +53,12 @@ const api = {
     ipcRenderer.on(IPC.OpenSettingsTab, listener);
     return () => ipcRenderer.removeListener(IPC.OpenSettingsTab, listener);
   },
+  requestOpenTool: (tool: 'calculator' | 'timer' | 'settings') => ipcRenderer.send(IPC.RequestOpenTool, tool),
+  onOpenToolTab: (cb: (tool: 'calculator' | 'timer' | 'settings') => void) => {
+    const listener = (_e: unknown, tool: 'calculator' | 'timer' | 'settings') => cb(tool);
+    ipcRenderer.on(IPC.OpenToolTab, listener);
+    return () => ipcRenderer.removeListener(IPC.OpenToolTab, listener);
+  },
 };
 
 contextBridge.exposeInMainWorld('toolbox', api);

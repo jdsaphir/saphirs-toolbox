@@ -70,6 +70,9 @@ function broadcast<T>(channel: string, payload: T) {
   }
 }
 
+// Name shown in Task Manager / window menus.
+app.setName("Saphir's Toolbox");
+
 app.whenReady().then(() => {
   initDb();
   const settings = getSettings();
@@ -184,6 +187,13 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.AppQuit, () => {
     quitApp();
     return true;
+  });
+
+  // Renderer (dolphin) asks the toolbox to open and jump to a specific tool.
+  ipcMain.on(IPC.RequestOpenTool, (_e, tool: string) => {
+    openOverlay();
+    const ov = getOverlayWindow();
+    ov?.webContents.send(IPC.OpenToolTab, tool);
   });
 
   app.on('activate', () => {

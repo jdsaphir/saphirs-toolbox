@@ -36,4 +36,6 @@ export const IPC = {
   // App control
   AppQuit: 'app:quit',
   OpenSettingsTab: 'app:open-settings', // main -> overlay renderer
+  OpenToolTab: 'app:open-tool',         // main -> overlay renderer; payload: 'calculator' | 'timer' | 'settings'
+  RequestOpenTool: 'app:request-tool',  // renderer -> main; payload: tool id
 } as const;
