@@ -157,12 +157,12 @@ export const StatusPalette: React.FC<{
 
   // Combinable flag definitions for the palette (excluding the mutually-exclusive
   // progress states which get their own row).
-  const FLAG_DEFS: Array<{ key: keyof TodoItem; glyph: GlyphKey }> = [
+  const FLAG_DEFS: Array<{ key: keyof TodoItem; glyph: GlyphKey; color?: string }> = [
     { key: 'meeting', glyph: 'meeting' },
     { key: 'deferred', glyph: 'deferred' },
     { key: 'delegated', glyph: 'delegated' },
-    { key: 'important', glyph: 'important' },
-    { key: 'comment', glyph: 'comment' },
+    { key: 'important', glyph: 'important', color: 'var(--important)' },
+    { key: 'comment', glyph: 'comment', color: 'var(--text-dim)' },
     { key: 'chevronUp', glyph: 'chevron_up' },
     { key: 'chevronDown', glyph: 'chevron_down' },
     { key: 'circle', glyph: 'circle' },
@@ -180,9 +180,9 @@ export const StatusPalette: React.FC<{
         <div className="label">Progress</div>
         <div className="palette-row">
           <PaletteCell active={item.progress === 'empty'} onClick={() => setProgress('empty')} title="To do" />
-          <PaletteCell active={item.progress === 'in_progress'} onClick={() => setProgress('in_progress')} title="In progress" glyphs={['in_progress']} />
+          <PaletteCell active={item.progress === 'in_progress'} onClick={() => setProgress('in_progress')} title="In progress" glyphs={['in_progress']} color="var(--accent)" />
           <PaletteCell active={item.progress === 'backslash'} onClick={() => setProgress('backslash')} title="Backslash (reserved)" glyphs={['backslash']} />
-          <PaletteCell active={item.progress === 'done'} onClick={() => setProgress('done')} title="Done" glyphs={['done']} />
+          <PaletteCell active={item.progress === 'done'} onClick={() => setProgress('done')} title="Done" glyphs={['done']} color="var(--success)" />
         </div>
       </div>
       <div className="palette-section">
@@ -195,6 +195,7 @@ export const StatusPalette: React.FC<{
               onClick={() => toggleFlag(d.key)}
               title={GLYPH_LABEL[d.glyph]}
               glyphs={[d.glyph]}
+              color={d.color}
             />
           ))}
         </div>
@@ -202,10 +203,10 @@ export const StatusPalette: React.FC<{
       <div className="palette-section">
         <div className="label">Notches</div>
         <div className="palette-toggle-row">
-          <div className={`palette-toggle optional ${item.optional ? 'active' : ''}`} onClick={() => toggleFlag('optional')} title="Top-left: Optional">◤ Optional</div>
-          <div className={`palette-toggle personal ${item.personal ? 'active' : ''}`} onClick={() => toggleFlag('personal')} title="Top-right: Personal">◥ Personal</div>
-          <div className={`palette-toggle canceled ${item.canceled ? 'active' : ''}`} onClick={() => toggleFlag('canceled')} title="Bottom-left: Canceled">◣ Canceled</div>
-          <div className={`palette-toggle followUp ${item.followUp ? 'active' : ''}`} onClick={() => toggleFlag('followUp')} title="Bottom-right: Follow up">◢ Follow up</div>
+          <div className={`palette-toggle optional ${item.optional ? 'active' : ''}`} onClick={() => toggleFlag('optional')} title="Top-left: Optional"><span style={{ color: 'var(--success)' }}>◤</span> Optional</div>
+          <div className={`palette-toggle personal ${item.personal ? 'active' : ''}`} onClick={() => toggleFlag('personal')} title="Top-right: Personal"><span style={{ color: 'var(--accent)' }}>◥</span> Personal</div>
+          <div className={`palette-toggle canceled ${item.canceled ? 'active' : ''}`} onClick={() => toggleFlag('canceled')} title="Bottom-left: Canceled"><span style={{ color: 'var(--text-dim)' }}>◣</span> Canceled</div>
+          <div className={`palette-toggle followUp ${item.followUp ? 'active' : ''}`} onClick={() => toggleFlag('followUp')} title="Bottom-right: Follow up"><span style={{ color: 'var(--danger)' }}>◢</span> Follow up</div>
         </div>
       </div>
     </div>,
@@ -218,9 +219,10 @@ const PaletteCell: React.FC<{
   onClick: () => void;
   title: string;
   glyphs?: GlyphKey[];
-}> = ({ active, onClick, title, glyphs }) => (
+  color?: string;
+}> = ({ active, onClick, title, glyphs, color }) => (
   <div className={`palette-cell ${active ? 'active' : ''}`} title={title} onClick={onClick}>
-    <div className="checkbox" style={{ width: 26, height: 26 }}>
+    <div className="checkbox" style={{ width: 26, height: 26, color }}>
       {glyphs && glyphs.length > 0 && (
         <svg viewBox="0 0 18 18" width="100%" height="100%">
           {glyphs.map(g => (
