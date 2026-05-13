@@ -1,6 +1,6 @@
 {
   "name": "saphirs-toolbox",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Saphir's Toolbox",
   "main": "dist-main/main/index.js",
   "author": "Saphir",
@@ -13,13 +13,15 @@
     "compile": "tsc -p tsconfig.main.json && vite build",
     "start": "npm run compile && electron .",
     "icon": "node scripts/build-icon.mjs",
-    "build": "tsc -p tsconfig.main.json && vite build && electron-builder",
+    "build": "tsc -p tsconfig.main.json && vite build && electron-builder --publish never",
     "build:dir": "tsc -p tsconfig.main.json && vite build && electron-builder --dir",
+    "release": "tsc -p tsconfig.main.json && vite build && electron-builder --publish always",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",
+    "electron-updater": "^6.3.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -50,14 +52,31 @@
     "directories": {
       "buildResources": "assets"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "jdsaphir",
+        "repo": "saphirs-toolbox"
+      }
+    ],
     "win": {
       "target": [
-        { "target": "portable", "arch": ["x64"] }
+        { "target": "portable", "arch": ["x64"] },
+        { "target": "nsis", "arch": ["x64"] }
       ],
       "icon": "assets/icon.ico"
     },
     "portable": {
-      "artifactName": "SaphirsToolbox.exe"
+      "artifactName": "SaphirsToolbox-${version}-portable.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Saphir's Toolbox",
+      "artifactName": "SaphirsToolbox-${version}-setup.exe"
     }
   }
 }

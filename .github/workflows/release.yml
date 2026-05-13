@@ -1,0 +1,40 @@
+name: Release
+
+# Triggered when a version tag is pushed (e.g. `git push origin v1.0.0`).
+# The tag's version should match `version` in package.json; electron-builder
+# uses the package.json version for artifact filenames and the Release tag.
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    # The default GITHUB_TOKEN needs `contents: write` to create/update Releases.
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build & publish
+        # `--publish always` uploads artifacts (portable .exe, setup .exe,
+        # latest.yml) to a GitHub Release matching the tag. Release is
+        # created as a draft by default so notes can be edited before
+        # going public.
+        run: npm run release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

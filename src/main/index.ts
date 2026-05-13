@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, globalShortcut, ipcMain, screen } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import fs from 'fs';
 import path from 'path';
 import { IPC } from '../shared/ipc';
@@ -106,6 +107,19 @@ app.whenReady().then(() => {
     },
     onQuit: () => quitApp(),
   });
+
+  // Auto-update: only meaningful for the NSIS-installed build. For the
+  // portable build, electron-updater can't replace a running .exe so this
+  // call is effectively a no-op (it logs an error and moves on). The dev
+  // build is unpackaged and skipped entirely.
+  if (app.isPackaged) {
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.on('error', err => console.error('[autoUpdater]', err));
+    autoUpdater.checkForUpdatesAndNotify().catch(err => {
+      console.error('[autoUpdater] check failed:', err);
+    });
+  }
 
   // ── Toolbox ────────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.ToolboxToggle, () => {

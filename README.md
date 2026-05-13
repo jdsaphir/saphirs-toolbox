@@ -36,6 +36,17 @@ Corner notches combine with any status:
 - **Bottom-right**: Follow up
 - **Bottom-left**: Canceled
 
+## Install
+
+Pre-built Windows binaries are attached to each [GitHub Release](https://github.com/jdsaphir/saphirs-toolbox/releases):
+
+- **Setup (`SaphirsToolbox-<version>-setup.exe`)** — installs the app, registers it in Add/Remove Programs, and auto-updates in place when new versions are released.
+- **Portable (`SaphirsToolbox-<version>-portable.exe`)** — single self-contained executable. Drop it anywhere and double-click. No installation, no Add/Remove Programs entry. Update by downloading a new release.
+
+The app lives in the system tray. Right-click the tray icon for Open / Hide / Settings / Quit, or click the dolphin to toggle the toolbox. There is also a Quit button at the bottom of the Settings panel.
+
+Data lives in SQLite at `%APPDATA%/saphirs-toolbox/toolbox.db`.
+
 ## Run & build
 
 ```sh
@@ -43,14 +54,23 @@ npm install
 npm run dev     # vite + electron with hot reload
 npm start       # compile, then run electron
 npm run icon    # regenerate assets/icon.ico and assets/tray.png from the SVG
-npm run build   # produce a portable .exe in dist/ (no installer, no taskbar entry)
+npm run build   # produce dist/SaphirsToolbox-<version>-{portable,setup}.exe (no publish)
+npm run release # same, but publish to GitHub Releases (requires GH_TOKEN)
 ```
 
-The portable build produces `dist/SaphirsToolbox.exe` — a single self-contained executable. Drop it anywhere (Desktop, a tools folder, pinned to Start) and double-click to launch. No installation required.
+## Releasing
 
-The app lives in the system tray. Right-click the tray icon for Open / Hide / Settings / Quit, or click the dolphin to toggle the toolbox. There is also a Quit button at the bottom of the Settings panel.
+Tagged commits matching `v*.*.*` are built by `.github/workflows/release.yml` on a Windows runner and published to GitHub Releases as a draft. To cut a release:
 
-Data lives in SQLite at `%APPDATA%/saphirs-toolbox/toolbox.db`.
+```sh
+# 1. Bump `version` in package.json and commit
+npm version 1.0.1            # also creates the v1.0.1 tag locally
+git push && git push --tags
+# 2. Wait for the Release workflow to finish (Actions tab)
+# 3. On GitHub, review the draft release, edit notes, click Publish
+```
+
+Installed (NSIS) builds check for updates on launch via `electron-updater`. Portable builds don't auto-update — users grab a new file from the Releases page.
 
 ## Stack
 
@@ -61,5 +81,4 @@ Data lives in SQLite at `%APPDATA%/saphirs-toolbox/toolbox.db`.
 
 ## Roadmap / not yet built
 
-- **Auto-update.** Wire `electron-updater` against GitHub Releases once the app stabilizes. Each tagged release publishes a new portable build; running instances check on launch and offer to update.
 - More tools: unit converter, color picker, clipboard history, regex tester, JSON formatter, world clock.
