@@ -181,7 +181,7 @@ export const StatusPalette: React.FC<{
         <div className="palette-row">
           <PaletteCell active={item.progress === 'empty'} onClick={() => setProgress('empty')} title="To do" />
           <PaletteCell active={item.progress === 'in_progress'} onClick={() => setProgress('in_progress')} title="In progress" glyphs={['in_progress']} color="var(--accent)" />
-          <PaletteCell active={item.progress === 'backslash'} onClick={() => setProgress('backslash')} title="Backslash (reserved)" glyphs={['backslash']} />
+          <PaletteCell active={item.progress === 'backslash'} onClick={() => setProgress('backslash')} title="Backslash (reserved)" glyphs={['backslash']} color="var(--danger)" />
           <PaletteCell active={item.progress === 'done'} onClick={() => setProgress('done')} title="Done" glyphs={['done']} color="var(--success)" />
         </div>
       </div>

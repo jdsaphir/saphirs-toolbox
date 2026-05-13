@@ -178,7 +178,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
   margin-bottom: 8px;
 }
 .todo-date-row .date-input {
-  flex: 0 0 50px;
+  flex: 0 0 44px;
   padding: 2px 3px;
   font-size: 10px;
   text-align: center;
@@ -344,8 +344,9 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 }
 .palette-cell:hover { border-color: var(--accent); }
 .palette-cell.active { border-color: var(--accent); background: rgba(95, 180, 255, 0.18); }
-/* Within a palette cell, the inner mini-checkbox shouldn't be clickable on its own. */
-.palette-cell .checkbox { pointer-events: none; }
+/* Within a palette cell, the inner mini-checkbox shouldn't be clickable on its own.
+   flex: none overrides the CSS flex-basis: 18px so the inline width/height take effect. */
+.palette-cell .checkbox { pointer-events: none; flex: none; }
 
 .palette-toggle-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
 .palette-toggle {
