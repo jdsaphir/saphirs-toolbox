@@ -70,6 +70,7 @@ export const Checkbox: React.FC<{
   let stateClass = '';
   if (item.progress === 'done') stateClass = 'done';
   else if (item.progress === 'in_progress') stateClass = 'in_progress';
+  else if (item.progress === 'backslash') stateClass = 'backslash';
   else if (item.important) stateClass = 'important';
   else if (item.comment) stateClass = 'comment';
 

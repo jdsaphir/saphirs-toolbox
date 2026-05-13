@@ -302,6 +302,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
    the box's hue follows progress (done > in_progress) then a few key flags. */
 .checkbox.done { border-color: var(--success); color: var(--success); }
 .checkbox.in_progress { border-color: var(--accent); color: var(--accent); }
+.checkbox.backslash { border-color: var(--danger); color: var(--danger); }
 .checkbox.important { color: var(--important); border-color: var(--important); }
 .checkbox.comment { color: var(--text-comment); border-color: var(--text-comment); }
 
