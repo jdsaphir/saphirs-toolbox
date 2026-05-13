@@ -179,7 +179,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 }
 .todo-date-row .date-input {
   flex: 0 0 auto;
-  width: 56px;
+  width: 64px;
   min-width: 0;
   padding: 2px 3px;
   font-size: 10px;
