@@ -1,11 +1,12 @@
 import React from 'react';
 
-// SVG glyphs that compose inside a 16-unit-wide viewBox. Each one is a stroke
-// (no fill) drawn corner-to-corner or edge-to-edge so multiple statuses can be
-// layered cleanly inside the same checkbox.
+// SVG glyphs that compose inside an 18-unit viewBox (matching the checkbox's
+// 18px outer size). Each one is a stroke (no fill) drawn corner-to-corner or
+// edge-to-edge so multiple statuses can layer cleanly inside the same box.
 //
-// The checkbox renders these into an <svg viewBox="0 0 16 16"> sized to fill
-// the box's content area. Stroke color comes from CSS via `currentColor`.
+// Coordinates run 1..17 so that with stroke-width 2 the round line cap sits
+// flush with the inner edge of the box border — strokes visibly touch the
+// edges without being clipped.
 
 const COMMON_PROPS = {
   fill: 'none',
@@ -17,6 +18,7 @@ const COMMON_PROPS = {
 
 export const GLYPH_KEYS = [
   'in_progress',
+  'backslash',
   'done',
   'meeting',
   'deferred',
@@ -31,6 +33,7 @@ export type GlyphKey = (typeof GLYPH_KEYS)[number];
 
 export const GLYPH_LABEL: Record<GlyphKey, string> = {
   in_progress: 'In progress',
+  backslash: 'Reserved (\\)',
   done: 'Done',
   meeting: 'Meeting / call',
   deferred: 'Deferred',
@@ -42,57 +45,50 @@ export const GLYPH_LABEL: Record<GlyphKey, string> = {
   circle: 'Circle',
 };
 
-// Bounded to the 16x16 viewBox with ~1.5 unit padding so strokes don't kiss the
-// border. Each glyph occupies the full inner area for clarity at 16-22px sizes.
 export function renderGlyph(key: GlyphKey): React.ReactNode {
   switch (key) {
     case 'in_progress':
-      // bottom-left to top-right diagonal
-      return <line x1="2.5" y1="13.5" x2="13.5" y2="2.5" {...COMMON_PROPS} />;
+      // bottom-left corner → top-right corner
+      return <line x1="1" y1="17" x2="17" y2="1" {...COMMON_PROPS} />;
+    case 'backslash':
+      // top-left corner → bottom-right corner
+      return <line x1="1" y1="1" x2="17" y2="17" {...COMMON_PROPS} />;
     case 'done':
-      // tick
-      return <polyline points="2.5,8.5 6.5,12.5 13.5,3.5" {...COMMON_PROPS} />;
-    case 'meeting':
-      // horizontal bar through middle, edge to edge
-      return <line x1="2.5" y1="8" x2="13.5" y2="8" {...COMMON_PROPS} />;
-    case 'deferred':
-      // right-pointing chevron, top-left → mid-right → bottom-left
-      return <polyline points="3.5,2.5 11.5,8 3.5,13.5" {...COMMON_PROPS} />;
-    case 'delegated':
-      // left-pointing chevron, top-right → mid-left → bottom-right
-      return <polyline points="12.5,2.5 4.5,8 12.5,13.5" {...COMMON_PROPS} />;
-    case 'important':
-      // vertical bar through middle, edge to edge
-      return <line x1="8" y1="2.5" x2="8" y2="13.5" {...COMMON_PROPS} />;
-    case 'comment':
-      // two parallel slashes
+      // × — both diagonals
       return (
         <>
-          <line x1="3" y1="12.5" x2="7.5" y2="3.5" {...COMMON_PROPS} />
-          <line x1="8.5" y1="12.5" x2="13" y2="3.5" {...COMMON_PROPS} />
+          <line x1="1" y1="1" x2="17" y2="17" {...COMMON_PROPS} />
+          <line x1="17" y1="1" x2="1" y2="17" {...COMMON_PROPS} />
+        </>
+      );
+    case 'meeting':
+      // horizontal bar through middle, full width
+      return <line x1="1" y1="9" x2="17" y2="9" {...COMMON_PROPS} />;
+    case 'deferred':
+      // > — apex at right-edge middle; tails at top-left & bottom-left corners
+      return <polyline points="1,1 17,9 1,17" {...COMMON_PROPS} />;
+    case 'delegated':
+      // < — apex at left-edge middle; tails at top-right & bottom-right corners
+      return <polyline points="17,1 1,9 17,17" {...COMMON_PROPS} />;
+    case 'important':
+      // vertical bar through middle, full height
+      return <line x1="9" y1="1" x2="9" y2="17" {...COMMON_PROPS} />;
+    case 'comment':
+      // two parallel slashes spanning most of the box
+      return (
+        <>
+          <line x1="2" y1="16" x2="8" y2="2" {...COMMON_PROPS} />
+          <line x1="10" y1="16" x2="16" y2="2" {...COMMON_PROPS} />
         </>
       );
     case 'chevron_up':
-      // ^ pointing up
-      return <polyline points="3,11 8,4 13,11" {...COMMON_PROPS} />;
+      // ^ — apex at top-edge middle; tails at bottom-left & bottom-right corners
+      return <polyline points="1,17 9,1 17,17" {...COMMON_PROPS} />;
     case 'chevron_down':
-      // v pointing down
-      return <polyline points="3,5 8,12 13,5" {...COMMON_PROPS} />;
+      // v — apex at bottom-edge middle; tails at top-left & top-right corners
+      return <polyline points="1,1 9,17 17,1" {...COMMON_PROPS} />;
     case 'circle':
-      return <circle cx="8" cy="8" r="4.5" {...COMMON_PROPS} />;
+      // centered circle filling the box
+      return <circle cx="9" cy="9" r="7" {...COMMON_PROPS} />;
   }
 }
-
-// A standalone preview chip for the palette: just the box + this glyph.
-export const GlyphPreview: React.FC<{ keys: GlyphKey[]; size?: number; className?: string }> = ({ keys, size = 22, className }) => (
-  <div
-    className={`checkbox ${className ?? ''}`}
-    style={{ width: size, height: size, padding: 0 }}
-  >
-    <svg viewBox="0 0 16 16" width="100%" height="100%">
-      {keys.map(k => (
-        <React.Fragment key={k}>{renderGlyph(k)}</React.Fragment>
-      ))}
-    </svg>
-  </div>
-);

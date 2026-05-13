@@ -265,7 +265,13 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .checkbox:hover { border-color: var(--accent); }
 .checkbox svg { display: block; width: 100%; height: 100%; }
 
-/* Corner notches: small triangles in each corner */
+/* Corner notches: small triangles. One color per corner so they're
+   distinguishable at a glance:
+     top-left  (optional)  = green
+     top-right (personal)  = blue
+     bot-right (follow up) = red
+     bot-left  (canceled)  = gray
+*/
 .checkbox .notch {
   position: absolute;
   width: 0; height: 0;
@@ -274,7 +280,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .checkbox .notch.tl {
   top: -1px; left: -1px;
   border-width: 6px 6px 0 0;
-  border-color: var(--warning) transparent transparent transparent;
+  border-color: var(--success) transparent transparent transparent;
 }
 .checkbox .notch.tr {
   top: -1px; right: -1px;
@@ -284,12 +290,12 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .checkbox .notch.br {
   bottom: -1px; right: -1px;
   border-width: 0 0 6px 6px;
-  border-color: transparent transparent var(--warning) transparent;
+  border-color: transparent transparent var(--danger) transparent;
 }
 .checkbox .notch.bl {
   bottom: -1px; left: -1px;
   border-width: 6px 0 0 6px;
-  border-color: transparent transparent transparent var(--danger);
+  border-color: transparent transparent transparent var(--text-dim);
 }
 
 /* Border/stroke color by dominant status. Multiple glyphs may be drawn but
@@ -351,7 +357,11 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
   cursor: pointer;
   text-align: left;
 }
-.palette-toggle.active { background: var(--accent-dim); border-color: var(--accent); }
+/* When active, each notch toggle takes on its corresponding corner color. */
+.palette-toggle.optional.active  { background: rgba(110, 231, 160, 0.22); border-color: var(--success); color: var(--success); }
+.palette-toggle.personal.active  { background: rgba(95, 180, 255, 0.22);  border-color: var(--accent);  color: var(--accent);  }
+.palette-toggle.followUp.active  { background: rgba(255, 107, 107, 0.22); border-color: var(--danger);  color: var(--danger);  }
+.palette-toggle.canceled.active  { background: rgba(154, 168, 189, 0.22); border-color: var(--text-dim); color: var(--text); }
 
 /* ─────────────────────────── Scratchpad widget ───────────────────────────── */
 

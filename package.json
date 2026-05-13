@@ -1,6 +1,6 @@
 {
   "name": "saphirs-toolbox",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Saphir's Toolbox",
   "main": "dist-main/main/index.js",
   "author": "Saphir",

@@ -7,6 +7,7 @@ import { GLYPH_KEYS, GLYPH_LABEL, GlyphKey, renderGlyph } from './CheckboxGlyphs
 function todoGlyphs(t: TodoItem): GlyphKey[] {
   const out: GlyphKey[] = [];
   if (t.progress === 'in_progress') out.push('in_progress');
+  if (t.progress === 'backslash') out.push('backslash');
   if (t.progress === 'done') out.push('done');
   if (t.meeting) out.push('meeting');
   if (t.deferred) out.push('deferred');
@@ -19,7 +20,8 @@ function todoGlyphs(t: TodoItem): GlyphKey[] {
   return out;
 }
 
-// Cycle order for the click-to-cycle interaction mode: empty → / → ✓ → empty.
+// Cycle order for the click-to-cycle interaction mode. Skips 'backslash'
+// since it's reserved for explicit user choice via the palette.
 const CYCLE: ProgressState[] = ['empty', 'in_progress', 'done'];
 
 export const Checkbox: React.FC<{
@@ -52,6 +54,7 @@ export const Checkbox: React.FC<{
   const titleParts: string[] = [];
   if (item.progress === 'empty' && glyphs.length === 0) titleParts.push('To do');
   if (item.progress === 'in_progress') titleParts.push('In progress');
+  if (item.progress === 'backslash') titleParts.push('Backslash (reserved)');
   if (item.progress === 'done') titleParts.push('Done');
   if (item.meeting) titleParts.push('Meeting');
   if (item.deferred) titleParts.push('Deferred');
@@ -78,7 +81,7 @@ export const Checkbox: React.FC<{
       onContextMenu={handleContextMenu}
       title={titleParts.join(' · ')}
     >
-      <svg viewBox="0 0 16 16" width="100%" height="100%">
+      <svg viewBox="0 0 18 18" width="100%" height="100%">
         {glyphs.map(k => (
           <React.Fragment key={k}>{renderGlyph(k)}</React.Fragment>
         ))}
@@ -178,6 +181,7 @@ export const StatusPalette: React.FC<{
         <div className="palette-row">
           <PaletteCell active={item.progress === 'empty'} onClick={() => setProgress('empty')} title="To do" />
           <PaletteCell active={item.progress === 'in_progress'} onClick={() => setProgress('in_progress')} title="In progress" glyphs={['in_progress']} />
+          <PaletteCell active={item.progress === 'backslash'} onClick={() => setProgress('backslash')} title="Backslash (reserved)" glyphs={['backslash']} />
           <PaletteCell active={item.progress === 'done'} onClick={() => setProgress('done')} title="Done" glyphs={['done']} />
         </div>
       </div>
@@ -198,10 +202,10 @@ export const StatusPalette: React.FC<{
       <div className="palette-section">
         <div className="label">Notches</div>
         <div className="palette-toggle-row">
-          <div className={`palette-toggle ${item.optional ? 'active' : ''}`} onClick={() => toggleFlag('optional')} title="Top-left: Optional">◤ Optional</div>
-          <div className={`palette-toggle ${item.personal ? 'active' : ''}`} onClick={() => toggleFlag('personal')} title="Top-right: Personal">◥ Personal</div>
-          <div className={`palette-toggle ${item.canceled ? 'active' : ''}`} onClick={() => toggleFlag('canceled')} title="Bottom-left: Canceled">◣ Canceled</div>
-          <div className={`palette-toggle ${item.followUp ? 'active' : ''}`} onClick={() => toggleFlag('followUp')} title="Bottom-right: Follow up">◢ Follow up</div>
+          <div className={`palette-toggle optional ${item.optional ? 'active' : ''}`} onClick={() => toggleFlag('optional')} title="Top-left: Optional">◤ Optional</div>
+          <div className={`palette-toggle personal ${item.personal ? 'active' : ''}`} onClick={() => toggleFlag('personal')} title="Top-right: Personal">◥ Personal</div>
+          <div className={`palette-toggle canceled ${item.canceled ? 'active' : ''}`} onClick={() => toggleFlag('canceled')} title="Bottom-left: Canceled">◣ Canceled</div>
+          <div className={`palette-toggle followUp ${item.followUp ? 'active' : ''}`} onClick={() => toggleFlag('followUp')} title="Bottom-right: Follow up">◢ Follow up</div>
         </div>
       </div>
     </div>,
@@ -218,7 +222,7 @@ const PaletteCell: React.FC<{
   <div className={`palette-cell ${active ? 'active' : ''}`} title={title} onClick={onClick}>
     <div className="checkbox" style={{ width: 26, height: 26 }}>
       {glyphs && glyphs.length > 0 && (
-        <svg viewBox="0 0 16 16" width="100%" height="100%">
+        <svg viewBox="0 0 18 18" width="100%" height="100%">
           {glyphs.map(g => (
             <React.Fragment key={g}>{renderGlyph(g)}</React.Fragment>
           ))}

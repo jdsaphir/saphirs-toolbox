@@ -1,8 +1,12 @@
 // Shared types between main and renderer processes.
 
-// Progress is mutually exclusive: a task is either to-do (empty),
-// in progress (forward slash), or done (check mark).
-export type ProgressState = 'empty' | 'in_progress' | 'done';
+// Progress is mutually exclusive. Reserved 'backslash' is unused for now;
+// kept so users can adopt it later without a data migration.
+//   empty      — to do
+//   in_progress — forward slash (/)
+//   backslash   — backslash (\)   (reserved; meaning undefined)
+//   done        — × (corner-to-corner cross)
+export type ProgressState = 'empty' | 'in_progress' | 'backslash' | 'done';
 
 // Type flags layer freely on top of progress. A meeting can be in progress;
 // an important task can also be deferred; etc. The renderer draws each active
