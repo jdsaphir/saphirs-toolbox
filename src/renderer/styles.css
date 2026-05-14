@@ -382,6 +382,65 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
   font-size: 12px;
   line-height: 1.45;
 }
+.scratchpad-preview {
+  flex: 1;
+  min-height: 200px;
+  overflow-y: auto;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text);
+}
+/* Markdown typography inside the preview */
+.scratchpad-preview h1,
+.scratchpad-preview h2,
+.scratchpad-preview h3,
+.scratchpad-preview h4 {
+  margin: 0.75em 0 0.3em;
+  color: var(--text);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.scratchpad-preview h1 { font-size: 1.35em; border-bottom: 1px solid var(--border); padding-bottom: 0.2em; }
+.scratchpad-preview h2 { font-size: 1.15em; border-bottom: 1px solid var(--border); padding-bottom: 0.15em; }
+.scratchpad-preview h3 { font-size: 1.05em; }
+.scratchpad-preview h4 { font-size: 1em; }
+.scratchpad-preview p  { margin: 0.4em 0; }
+.scratchpad-preview ul,
+.scratchpad-preview ol { margin: 0.4em 0; padding-left: 1.4em; }
+.scratchpad-preview li { margin: 0.15em 0; }
+.scratchpad-preview code {
+  font-family: 'Consolas', 'Cascadia Mono', 'Courier New', monospace;
+  font-size: 0.92em;
+  background: rgba(0,0,0,0.3);
+  border-radius: 3px;
+  padding: 0.1em 0.35em;
+}
+.scratchpad-preview pre {
+  background: rgba(0,0,0,0.3);
+  border-radius: 4px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+.scratchpad-preview pre code { background: none; padding: 0; }
+.scratchpad-preview blockquote {
+  margin: 0.5em 0;
+  padding: 0.2em 0.8em;
+  border-left: 3px solid var(--accent);
+  color: var(--text-dim);
+}
+.scratchpad-preview a { color: var(--accent); text-decoration: underline; }
+.scratchpad-preview hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0.75em 0;
+}
+.scratchpad-preview strong { font-weight: 600; }
+.scratchpad-preview em { font-style: italic; }
+/* First/last child margin reset to avoid extra space at edges */
+.scratchpad-preview > :first-child { margin-top: 0; }
+.scratchpad-preview > :last-child  { margin-bottom: 0; }
 
 /* ─────────────────────────────── Toolbar ─────────────────────────────────── */
 
