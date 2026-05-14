@@ -112,15 +112,15 @@ export const Calculator: React.FC<Props> = ({ onClose }) => {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const k = e.key;
-      if (k >= '0' && k <= '9') inputDigitGated(k);
-      else if (k === '.') inputDigitGated('.');
-      else if (k === '+' || k === '-') pressOp(k as Op);
-      else if (k === '*') pressOp('×');
-      else if (k === '/') pressOp('÷');
-      else if (k === 'Enter' || k === '=') equals();
-      else if (k === 'Backspace') backspace();
+      if (k >= '0' && k <= '9') { e.preventDefault(); inputDigitGated(k); }
+      else if (k === '.') { e.preventDefault(); inputDigitGated('.'); }
+      else if (k === '+' || k === '-') { e.preventDefault(); pressOp(k as Op); }
+      else if (k === '*') { e.preventDefault(); pressOp('×'); }
+      else if (k === '/') { e.preventDefault(); pressOp('÷'); }
+      else if (k === 'Enter' || k === '=') { e.preventDefault(); equals(); }
+      else if (k === 'Backspace') { e.preventDefault(); backspace(); }
       else if (k === 'Escape') onClose();
-      else if (k.toLowerCase() === 'c') clearAll();
+      else if (k.toLowerCase() === 'c') { e.preventDefault(); clearAll(); }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
