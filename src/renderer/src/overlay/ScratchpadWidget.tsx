@@ -8,7 +8,15 @@ interface Props {
 }
 
 export const ScratchpadWidget: React.FC<Props> = ({ value, onChange }) => {
-  const [preview, setPreview] = useState(false);
+  const [preview, setPreview] = useState(() => localStorage.getItem('scratchpad-mode') === 'preview');
+
+  function togglePreview() {
+    setPreview(p => {
+      const next = !p;
+      localStorage.setItem('scratchpad-mode', next ? 'preview' : 'edit');
+      return next;
+    });
+  }
 
   async function openFile() {
     const content = await api.openMarkdown();
@@ -29,7 +37,7 @@ export const ScratchpadWidget: React.FC<Props> = ({ value, onChange }) => {
         <div className="actions">
           <button
             className="ghost icon"
-            onClick={() => setPreview(p => !p)}
+            onClick={togglePreview}
             title={preview ? 'Edit' : 'Preview'}
           >{preview ? '✏️' : '👁'}</button>
           <button className="ghost icon" onClick={openFile} title="Open .md">📂</button>
