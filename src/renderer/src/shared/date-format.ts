@@ -30,9 +30,9 @@ export function parseIsoDate(iso: string): Date {
   return new Date(y, m - 1, d);
 }
 
-// The title sheets use, matching the M/D/YYYY format the user types by hand.
+// The title sheets use when created from the calendar: M/DD/YYYY (day padded).
 export function formatSheetTitle(d: Date): string {
-  return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+  return `${d.getMonth() + 1}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
 // True when two dates fall on the same calendar day.

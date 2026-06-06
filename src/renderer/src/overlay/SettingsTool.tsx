@@ -112,6 +112,31 @@ export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
         </select>
       </div>
 
+      <div className="section-label">Dolphin colors</div>
+      <div className="color-grid">
+        <ColorField
+          label={local.dolphinIcon === 'duotone' ? 'Body' : 'Icon'}
+          value={local.dolphinColor}
+          onChange={v => save({ dolphinColor: v })}
+        />
+        <ColorField
+          label={local.dolphinIcon === 'duotone' ? 'Body (open)' : 'Icon (open)'}
+          value={local.dolphinColorOpen}
+          onChange={v => save({ dolphinColorOpen: v })}
+        />
+        {local.dolphinIcon === 'duotone' && (
+          <>
+            <ColorField label="Eye" value={local.dolphinEyeColor} onChange={v => save({ dolphinEyeColor: v })} />
+            <ColorField label="Eye (open)" value={local.dolphinEyeColorOpen} onChange={v => save({ dolphinEyeColorOpen: v })} />
+          </>
+        )}
+      </div>
+
+      <div className="section-label">App accent</div>
+      <div className="color-grid">
+        <ColorField label="Accent color" value={local.accentColor} onChange={v => save({ accentColor: v })} />
+      </div>
+
       <div className="field" style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
         <button
           onClick={() => { if (confirm("Quit Saphir's Toolbox?")) api.quitApp(); }}
@@ -123,6 +148,16 @@ export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
     </div>
   );
 };
+
+const ColorField: React.FC<{ label: string; value: string; onChange: (v: string) => void }> = ({ label, value, onChange }) => (
+  <div className="color-field">
+    <span className="sub">{label}</span>
+    <div className="row">
+      <input type="color" value={value} onChange={e => onChange(e.target.value)} />
+      <span className="hex">{value}</span>
+    </div>
+  </div>
+);
 
 function normalizeKey(key: string, _code: string): string {
   if (key === ' ') return 'Space';

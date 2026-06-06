@@ -10,7 +10,8 @@
   --text-dim: #9aa8bd;
   --text-comment: #6e7a8e;
   --accent: #5fb4ff;
-  --accent-dim: #3a7bb8;
+  /* Derived from --accent so a custom accent color cascades to button fills. */
+  --accent-dim: color-mix(in srgb, var(--accent) 65%, #0b1320);
   --danger: #ff6b6b;
   --warning: #ffb347;
   --important: #ffd166;
@@ -112,9 +113,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .dolphin-button svg {
   width: 100%;
   height: 100%;
-  fill: var(--accent);
+  /* Fill colors are supplied per-path by DolphinIcon from settings. */
 }
-.dolphin-button.open svg { fill: var(--success); }
 
 /* ────────────────────────────── Overlay layout ───────────────────────────── */
 
@@ -546,7 +546,9 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 
 .cal-grid {
   display: grid;
-  grid-template-columns: 22px repeat(7, 1fr);
+  /* minmax(0, 1fr) lets the day columns shrink below their min-content width,
+     so the 7 days always fit inside the widget instead of overflowing right. */
+  grid-template-columns: 22px repeat(7, minmax(0, 1fr));
   gap: 2px;
 }
 .cal-head {
@@ -558,6 +560,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
   padding: 2px 0 4px;
 }
 .cal-head.cal-weeknum { color: var(--text-comment); }
+.cal-head.weekend { color: var(--text-comment); }
 .cal-weeknum {
   font-size: 10px;
   color: var(--text-comment);
@@ -569,6 +572,9 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .cal-day {
   position: relative;
   height: 30px;
+  /* Reset the global button padding (4px 8px) which would otherwise force the
+     1fr tracks wider than their share and push the last column off the edge. */
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -581,6 +587,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
   cursor: pointer;
 }
 .cal-day:hover { background: rgba(120, 170, 230, 0.18); }
+.cal-day.weekend { color: var(--text-dim); }
 .cal-day.outside { color: var(--text-comment); opacity: 0.55; }
 .cal-day.selected { border-color: var(--accent); }
 .cal-day.today { background: var(--accent); color: #0b1320; font-weight: 700; }
@@ -617,9 +624,36 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 
 /* ──────────────────────────── Settings widget ────────────────────────────── */
 
-.settings-widget { width: 340px; }
+.settings-widget { width: 340px; max-height: 70vh; overflow-y: auto; }
 .settings-widget .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
 .settings-widget .field label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.settings-widget .section-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 14px 0 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.color-field { display: flex; flex-direction: column; gap: 4px; }
+.color-field .sub { font-size: 11px; color: var(--text-dim); }
+.color-field .row { display: flex; align-items: center; gap: 6px; }
+input[type="color"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+input[type="color"]::-webkit-color-swatch { border: none; border-radius: 3px; }
+.color-field .hex { font-family: monospace; font-size: 11px; color: var(--text-dim); }
 
 /* ─────────────────────────────── Sheets dropdown ─────────────────────────── */
 

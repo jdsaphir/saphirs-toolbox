@@ -2,20 +2,24 @@ import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../shared/api';
 import { DolphinIcon } from '../shared/DolphinIcon';
 import { formatTimer } from '../shared/timer-format';
-import type { DolphinIconVariant, TimerState } from '../../../shared/types';
+import type { Settings, TimerState } from '../../../shared/types';
 
 const CLICK_THRESHOLD_PX = 4;
 
 export const DolphinApp: React.FC = () => {
-  const [iconVariant, setIconVariant] = useState<DolphinIconVariant>('duotone');
+  const [settings, setSettings] = useState<Settings | null>(null);
   const [open, setOpen] = useState(false);
   const [timer, setTimer] = useState<TimerState | null>(null);
 
   const dragStateRef = useRef<{ startX: number; startY: number; moved: boolean } | null>(null);
 
   useEffect(() => {
-    api.getSettings().then(s => setIconVariant(s.dolphinIcon));
-    const offSettings = api.onSettingsChanged(s => setIconVariant(s.dolphinIcon));
+    const apply = (s: Settings) => {
+      setSettings(s);
+      document.documentElement.style.setProperty('--accent', s.accentColor);
+    };
+    api.getSettings().then(apply);
+    const offSettings = api.onSettingsChanged(apply);
     const offTb = api.onToolboxState(state => setOpen(state.open));
     const offTimer = api.onTimerTick(state => setTimer(state));
     return () => {
@@ -66,6 +70,14 @@ export const DolphinApp: React.FC = () => {
     return 'running';
   })();
 
+  const variant = settings?.dolphinIcon ?? 'duotone';
+  const bodyColor = open
+    ? (settings?.dolphinColorOpen ?? '#6ee7a0')
+    : (settings?.dolphinColor ?? '#5fb4ff');
+  const eyeColor = open
+    ? (settings?.dolphinEyeColorOpen ?? '#ffffff')
+    : (settings?.dolphinEyeColor ?? '#ffffff');
+
   return (
     <div className="dolphin-root">
       {timer && (
@@ -74,7 +86,7 @@ export const DolphinApp: React.FC = () => {
         </div>
       )}
       <div className={`dolphin-button ${open ? 'open' : ''}`} onMouseDown={handleMouseDown} title="Saphir's Toolbox">
-        <DolphinIcon variant={iconVariant} />
+        <DolphinIcon variant={variant} color={bodyColor} eyeColor={eyeColor} />
       </div>
     </div>
   );

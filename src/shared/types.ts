@@ -52,6 +52,13 @@ export interface Settings {
   dolphinY: number;
   toolboxSide: 'left' | 'right' | 'auto';  // direction the toolbar expands; auto = pick by dolphin x
   weekStart: WeekStart;                     // first day of the week shown in the calendar
+  // Dolphin icon colors (hex). "eye" is the duotone secondary color; the
+  // "Open" variants apply while the toolbox is open.
+  dolphinColor: string;
+  dolphinColorOpen: string;
+  dolphinEyeColor: string;
+  dolphinEyeColorOpen: string;
+  accentColor: string;                      // app accent (drives --accent at runtime)
 }
 
 export interface TimerState {

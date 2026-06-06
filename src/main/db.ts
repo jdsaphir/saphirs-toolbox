@@ -12,6 +12,11 @@ const DEFAULT_SETTINGS: Settings = {
   dolphinY: -1,
   toolboxSide: 'auto',
   weekStart: 'sunday',
+  dolphinColor: '#5fb4ff',
+  dolphinColorOpen: '#6ee7a0',
+  dolphinEyeColor: '#ffffff',
+  dolphinEyeColorOpen: '#ffffff',
+  accentColor: '#5fb4ff',
 };
 
 let db: Database.Database;

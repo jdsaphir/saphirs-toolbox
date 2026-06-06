@@ -93,7 +93,7 @@ export const Calendar: React.FC<Props> = ({ weekStart, sheets, activeDate, onPic
       <div className="cal-grid">
         <div className="cal-head cal-weeknum" title="ISO week">#</div>
         {weekdayLabels.map(l => (
-          <div key={l} className="cal-head">{l}</div>
+          <div key={l} className={`cal-head ${l === 'Sa' || l === 'Su' ? 'weekend' : ''}`}>{l}</div>
         ))}
 
         {weeks.map((row, wi) => (
@@ -102,7 +102,9 @@ export const Calendar: React.FC<Props> = ({ weekStart, sheets, activeDate, onPic
             {row.map(cell => {
               const iso = toIsoDate(cell);
               const outside = cell.getMonth() !== view.month;
+              const dow = cell.getDay();
               const classes = ['cal-day'];
+              if (dow === 0 || dow === 6) classes.push('weekend');
               if (outside) classes.push('outside');
               if (isSameDay(cell, today)) classes.push('today');
               if (datesWithSheet.has(iso)) classes.push('has-sheet');

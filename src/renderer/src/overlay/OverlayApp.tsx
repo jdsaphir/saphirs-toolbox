@@ -31,12 +31,16 @@ export const OverlayApp: React.FC = () => {
 
   // Mount: load settings + latest sheet + sheet list
   useEffect(() => {
-    api.getSettings().then(setSettings);
+    const applySettings = (s: Settings) => {
+      setSettings(s);
+      document.documentElement.style.setProperty('--accent', s.accentColor);
+    };
+    api.getSettings().then(applySettings);
     api.getSheet(null).then(s => {
       if (s) setSheet(s);
       api.listSheets().then(setSheets);
     });
-    const off1 = api.onSettingsChanged(setSettings);
+    const off1 = api.onSettingsChanged(applySettings);
     const off2 = api.onToolboxState(s => {
       setOpen(s.open);
       if (s.dolphinCenter) setDolphinCenter(s.dolphinCenter);
