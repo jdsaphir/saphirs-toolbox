@@ -4,16 +4,19 @@ import type { Settings, Sheet, TimerState } from '../../../shared/types';
 import { TodoWidget } from './TodoWidget';
 import { ScratchpadWidget } from './ScratchpadWidget';
 import { Calculator } from './Calculator';
+import { Calendar } from './Calendar';
 import { Timer, useTimerTicker } from './Timer';
 import { SettingsTool } from './SettingsTool';
 import { DraggableWindow } from './DraggableWindow';
+import { formatSheetTitle, parseIsoDate } from '../shared/date-format';
 import type { SheetSummary } from './SheetsDropdown';
 
-type ToolId = 'calculator' | 'timer' | 'settings' | null;
+type ToolId = 'calculator' | 'timer' | 'calendar' | 'settings' | null;
 
 const TOOLBAR_TOOLS: Array<{ id: NonNullable<ToolId>; label: string; icon: string }> = [
   { id: 'calculator', label: 'Calculator', icon: '🧮' },
   { id: 'timer', label: 'Timer', icon: '⏱' },
+  { id: 'calendar', label: 'Calendar', icon: '📅' },
   { id: 'settings', label: 'Settings', icon: '⚙' },
 ];
 
@@ -96,6 +99,23 @@ export const OverlayApp: React.FC = () => {
       const latest = await api.getSheet(null);
       if (latest) setSheet(latest);
     }
+  }
+
+  // Calendar: open the task list for a date, creating it on the fly if none
+  // exists yet. Either way the chosen sheet becomes the active one in the
+  // todo widget, and the calendar tool closes so the list is visible.
+  async function pickDate(iso: string) {
+    flushPersist();
+    const existing = sheets.find(s => s.displayDate === iso);
+    if (existing) {
+      const s = await api.getSheet(existing.id);
+      if (s) setSheet(s);
+    } else {
+      const created = await api.createSheet({ title: formatSheetTitle(parseIsoDate(iso)), displayDate: iso });
+      setSheet(created);
+      setSheets(await api.listSheets());
+    }
+    setActiveTool(null);
   }
 
   // Close handlers
@@ -257,6 +277,15 @@ export const OverlayApp: React.FC = () => {
         >
           {activeTool === 'calculator' && <Calculator onClose={() => setActiveTool(null)} />}
           {activeTool === 'timer' && <Timer state={timerState} setState={setTimerState} onClose={() => setActiveTool(null)} />}
+          {activeTool === 'calendar' && (
+            <Calendar
+              weekStart={settings.weekStart}
+              sheets={sheets}
+              activeDate={sheet.displayDate}
+              onPickDate={pickDate}
+              onClose={() => setActiveTool(null)}
+            />
+          )}
           {activeTool === 'settings' && <SettingsTool settings={settings} onClose={() => setActiveTool(null)} />}
         </DraggableWindow>
       )}

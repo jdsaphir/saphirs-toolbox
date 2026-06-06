@@ -42,6 +42,7 @@ export interface Sheet {
 
 export type CheckboxInteractionMode = 'palette' | 'cycle';
 export type DolphinIconVariant = 'duotone' | 'solid';
+export type WeekStart = 'sunday' | 'monday';
 
 export interface Settings {
   shortcut: string;                        // Electron accelerator
@@ -50,6 +51,7 @@ export interface Settings {
   dolphinX: number;
   dolphinY: number;
   toolboxSide: 'left' | 'right' | 'auto';  // direction the toolbar expands; auto = pick by dolphin x
+  weekStart: WeekStart;                     // first day of the week shown in the calendar
 }
 
 export interface TimerState {

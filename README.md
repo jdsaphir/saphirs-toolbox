@@ -12,8 +12,9 @@ A floating utility companion for Windows. A small dolphin button hovers over eve
 - **Sheet history** — unlimited sheets, navigated with `‹ ›` or the sheets dropdown.
 - **Scratchpad** — always visible alongside the to-do list. Open and save `.md` files.
 - **Calculator** — basic arithmetic with keyboard support.
+- **Calendar** — month grid with ISO week numbers; click a date to open its task list (or create one on the spot). Dates that already have a list are marked with a dot, and a "Today" button jumps back to the current month. Week start (Sunday/Monday) is configurable in settings.
 - **Timer / Stopwatch / Pomodoro** — runs in the background; remaining time appears as a pill above the dolphin icon.
-- **Settings** — rebind the global shortcut by pressing keys; switch checkbox interaction mode (popup palette vs. left-click cycle); pick dolphin icon style; control toolbar expansion direction.
+- **Settings** — rebind the global shortcut by pressing keys; switch checkbox interaction mode (popup palette vs. left-click cycle); pick dolphin icon style; control toolbar expansion direction; choose whether the calendar week starts on Sunday or Monday.
 
 ## Checkbox states
 

@@ -11,6 +11,7 @@ const DEFAULT_SETTINGS: Settings = {
   dolphinX: -1,        // -1 means "uninitialized; place at default"
   dolphinY: -1,
   toolboxSide: 'auto',
+  weekStart: 'sunday',
 };
 
 let db: Database.Database;

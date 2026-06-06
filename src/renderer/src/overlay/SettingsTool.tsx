@@ -104,6 +104,14 @@ export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
         </select>
       </div>
 
+      <div className="field">
+        <label>Calendar week starts on</label>
+        <select value={local.weekStart} onChange={e => save({ weekStart: e.target.value as Settings['weekStart'] })}>
+          <option value="sunday">Sunday</option>
+          <option value="monday">Monday</option>
+        </select>
+      </div>
+
       <div className="field" style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
         <button
           onClick={() => { if (confirm("Quit Saphir's Toolbox?")) api.quitApp(); }}

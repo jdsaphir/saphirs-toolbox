@@ -531,6 +531,74 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .calc-btn.clear { color: var(--danger); }
 .calc-btn.span2 { grid-column: span 2; }
 
+/* ───────────────────────────── Calendar widget ───────────────────────────── */
+
+.cal-widget { width: 256px; padding: 8px; }
+.cal-widget .widget-header .actions .icon { font-size: 11px; padding: 2px 6px; }
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.cal-month { font-size: 13px; font-weight: 600; }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: 22px repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-head {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 0 4px;
+}
+.cal-head.cal-weeknum { color: var(--text-comment); }
+.cal-weeknum {
+  font-size: 10px;
+  color: var(--text-comment);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+.cal-day {
+  position: relative;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text);
+  cursor: pointer;
+}
+.cal-day:hover { background: rgba(120, 170, 230, 0.18); }
+.cal-day.outside { color: var(--text-comment); opacity: 0.55; }
+.cal-day.selected { border-color: var(--accent); }
+.cal-day.today { background: var(--accent); color: #0b1320; font-weight: 700; }
+.cal-day.today:hover { background: var(--accent); }
+/* Dot marking dates that already have a task list. */
+.cal-day.has-sheet::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.cal-day.today.has-sheet::after { background: #0b1320; }
+
 /* ───────────────────────────── Timer widget ──────────────────────────────── */
 
 .timer-widget { width: 260px; }

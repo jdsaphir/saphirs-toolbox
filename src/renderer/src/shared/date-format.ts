@@ -10,13 +10,34 @@ function ordinal(n: number): string {
 }
 
 // ISO 8601 week number
-function isoWeek(d: Date): number {
+export function isoWeek(d: Date): number {
   const target = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   const dayNr = (target.getUTCDay() + 6) % 7;
   target.setUTCDate(target.getUTCDate() - dayNr + 3);
   const firstThursday = new Date(Date.UTC(target.getUTCFullYear(), 0, 4));
   const diff = target.getTime() - firstThursday.getTime();
   return 1 + Math.round((diff / 86400000 - 3 + ((firstThursday.getUTCDay() + 6) % 7)) / 7);
+}
+
+// Local YYYY-MM-DD (avoids the UTC shift of Date.toISOString()).
+export function toIsoDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Parse a YYYY-MM-DD string into a local Date (midnight local time).
+export function parseIsoDate(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+// The title sheets use, matching the M/D/YYYY format the user types by hand.
+export function formatSheetTitle(d: Date): string {
+  return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+}
+
+// True when two dates fall on the same calendar day.
+export function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 // Parse strings like "5/12/2026", "2026-05-12", "May 12 2026", "12 May 2026", etc.
