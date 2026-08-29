@@ -13,16 +13,41 @@ interface Props {
   onClose: () => void;
 }
 
-const POMODORO_WORK = 25 * 60;
-const POMODORO_BREAK = 5 * 60;
+const DEFAULT_POMODORO_WORK_MIN = 25;
+const DEFAULT_POMODORO_BREAK_MIN = 5;
+const MAX_MINUTES = 999;
+
+function clampMinutes(value: number): number {
+  const n = Math.floor(value);
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return Math.min(n, MAX_MINUTES);
+}
+
+const workMinutes = (s: TimerState) => s.pomodoroWorkMin ?? DEFAULT_POMODORO_WORK_MIN;
+const breakMinutes = (s: TimerState) => s.pomodoroBreakMin ?? DEFAULT_POMODORO_BREAK_MIN;
 
 export const Timer: React.FC<Props> = ({ state, setState, onClose }) => {
   const [minInput, setMinInput] = useState(5);
+  // Seeded from the live state so reopening the widget shows the durations
+  // actually in force — the state outlives this component.
+  const [workInput, setWorkInput] = useState(() => workMinutes(state));
+  const [breakInput, setBreakInput] = useState(() => breakMinutes(state));
+
+  function pomodoroState(phase: 'work' | 'break', work: number, brk: number): TimerState {
+    return {
+      mode: 'pomodoro',
+      running: false,
+      seconds: (phase === 'work' ? work : brk) * 60,
+      pomodoroPhase: phase,
+      pomodoroWorkMin: work,
+      pomodoroBreakMin: brk,
+    };
+  }
 
   function setMode(mode: TimerState['mode']) {
     if (mode === 'stopwatch') setState({ mode, running: false, seconds: 0 });
     else if (mode === 'timer') setState({ mode, running: false, seconds: minInput * 60 });
-    else setState({ mode, running: false, seconds: POMODORO_WORK, pomodoroPhase: 'work' });
+    else setState(pomodoroState('work', workInput, breakInput));
   }
 
   function start() { setState(s => ({ ...s, running: true })); }
@@ -30,11 +55,17 @@ export const Timer: React.FC<Props> = ({ state, setState, onClose }) => {
   function reset() {
     if (state.mode === 'stopwatch') setState({ mode: 'stopwatch', running: false, seconds: 0 });
     else if (state.mode === 'timer') setState({ mode: 'timer', running: false, seconds: minInput * 60 });
-    else setState({ mode: 'pomodoro', running: false, seconds: POMODORO_WORK, pomodoroPhase: 'work' });
+    else setState(pomodoroState('work', workInput, breakInput));
   }
 
   function applyTimerSet() {
     if (state.mode === 'timer') setState({ mode: 'timer', running: false, seconds: minInput * 60 });
+  }
+
+  // Restarts the phase you're currently in at its new length.
+  function applyPomodoroSet() {
+    if (state.mode !== 'pomodoro') return;
+    setState(s => pomodoroState(s.pomodoroPhase ?? 'work', workInput, breakInput));
   }
 
   return (
@@ -50,15 +81,45 @@ export const Timer: React.FC<Props> = ({ state, setState, onClose }) => {
       </div>
       {state.mode === 'timer' && (
         <div className="timer-set-row">
-          <span style={{ color: 'var(--text-dim)', fontSize: 11 }}>Minutes:</span>
-          <input type="number" min={1} value={minInput} onChange={e => setMinInput(Math.max(1, Number(e.target.value) || 1))} />
+          <span className="timer-set-label">Minutes</span>
+          <input
+            type="number"
+            min={1}
+            max={MAX_MINUTES}
+            value={minInput}
+            onChange={e => setMinInput(clampMinutes(Number(e.target.value)))}
+          />
           <button className="ghost" onClick={applyTimerSet}>Set</button>
         </div>
       )}
       {state.mode === 'pomodoro' && (
-        <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-dim)' }}>
-          {state.pomodoroPhase === 'work' ? 'Work phase' : 'Break phase'} · 25 / 5
-        </div>
+        <>
+          <div className="timer-set-row">
+            <span className="timer-set-label">Work</span>
+            <input
+              type="number"
+              min={1}
+              max={MAX_MINUTES}
+              value={workInput}
+              onChange={e => setWorkInput(clampMinutes(Number(e.target.value)))}
+              title="Work phase length, in minutes"
+            />
+            <span className="timer-set-label">Break</span>
+            <input
+              type="number"
+              min={1}
+              max={MAX_MINUTES}
+              value={breakInput}
+              onChange={e => setBreakInput(clampMinutes(Number(e.target.value)))}
+              title="Break phase length, in minutes"
+            />
+            <button className="ghost" onClick={applyPomodoroSet}>Set</button>
+          </div>
+          <div className="timer-phase-label">
+            {state.pomodoroPhase === 'work' ? 'Work phase' : 'Break phase'}
+            {' · '}{workMinutes(state)} / {breakMinutes(state)}
+          </div>
+        </>
       )}
       <div className="timer-display">{formatTimer(state.seconds)}</div>
       <div className="timer-controls">
@@ -94,8 +155,8 @@ export function useTimerTicker(state: TimerState, setState: React.Dispatch<React
       } else if (s.mode === 'pomodoro') {
         if (s.seconds <= 1) {
           const nextPhase = s.pomodoroPhase === 'work' ? 'break' : 'work';
-          const nextSecs = nextPhase === 'work' ? POMODORO_WORK : POMODORO_BREAK;
-          setState({ ...s, seconds: nextSecs, pomodoroPhase: nextPhase });
+          const nextMin = nextPhase === 'work' ? workMinutes(s) : breakMinutes(s);
+          setState({ ...s, seconds: nextMin * 60, pomodoroPhase: nextPhase });
         } else {
           setState({ ...s, seconds: s.seconds - 1 });
         }

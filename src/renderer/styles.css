@@ -57,7 +57,7 @@ button.primary:hover { background: var(--accent); }
 button.ghost { border-color: transparent; }
 button.icon { padding: 4px 6px; line-height: 1; }
 
-input[type="text"], input[type="date"], textarea, select {
+input[type="text"], input[type="number"], input[type="date"], textarea, select {
   font-family: inherit;
   font-size: inherit;
   color: var(--text);
@@ -67,6 +67,8 @@ input[type="text"], input[type="date"], textarea, select {
   padding: 4px 6px;
   outline: none;
 }
+/* The spin buttons are drawn by the UA, so they only go dark via color-scheme. */
+input[type="number"] { color-scheme: dark; }
 input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 
 /* ───────────────────────────── Dolphin window ────────────────────────────── */
@@ -621,6 +623,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .timer-controls button { min-width: 60px; }
 .timer-set-row { display: flex; gap: 4px; align-items: center; margin-bottom: 6px; }
 .timer-set-row input { width: 50px; text-align: center; }
+.timer-set-label { font-size: 11px; color: var(--text-dim); }
+.timer-phase-label { text-align: center; font-size: 11px; color: var(--text-dim); }
 
 /* ──────────────────────────── Settings widget ────────────────────────────── */
 

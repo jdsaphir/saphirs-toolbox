@@ -68,6 +68,11 @@ export interface TimerState {
   seconds: number;
   // pomodoro: current phase
   pomodoroPhase?: 'work' | 'break';
+  // pomodoro: phase lengths in minutes. Optional — omitted means the 25 / 5
+  // defaults. They live on the state (not just in the widget) because the
+  // headless ticker rolls phases over while the Timer widget is closed.
+  pomodoroWorkMin?: number;
+  pomodoroBreakMin?: number;
 }
 
 export const EMPTY_TODO: TodoItem = {
