@@ -383,7 +383,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
   contain: size;
 }
 .notes-column .daily-notes { flex: 1 1 0; }
-.notes-column .permanent-notes { flex: 1.8 1 0; }
+.notes-column .permanent-notes { flex: 2 1 0; }
 
 .scratchpad-widget {
   display: flex;

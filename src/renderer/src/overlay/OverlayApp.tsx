@@ -237,7 +237,7 @@ export const OverlayApp: React.FC = () => {
     <div className="notes-column">
       <ScratchpadWidget
         className="daily-notes"
-        title="Today's Notes"
+        title="Day Notes"
         value={sheet.scratchpad}
         onChange={v => persistSheet({ ...sheet, scratchpad: v })}
         modeKey="scratchpad-mode"
