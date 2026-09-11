@@ -3,17 +3,23 @@ import { marked } from 'marked';
 import { api } from '../shared/api';
 
 interface Props {
+  title: string;
   value: string;
   onChange: (v: string) => void;
+  // localStorage key remembering this pad's edit/preview mode, so each pad
+  // keeps its own toggle.
+  modeKey: string;
+  placeholder?: string;
+  className?: string;
 }
 
-export const ScratchpadWidget: React.FC<Props> = ({ value, onChange }) => {
-  const [preview, setPreview] = useState(() => localStorage.getItem('scratchpad-mode') === 'preview');
+export const ScratchpadWidget: React.FC<Props> = ({ title, value, onChange, modeKey, placeholder = 'Markdown notes…', className = '' }) => {
+  const [preview, setPreview] = useState(() => localStorage.getItem(modeKey) === 'preview');
 
   function togglePreview() {
     setPreview(p => {
       const next = !p;
-      localStorage.setItem('scratchpad-mode', next ? 'preview' : 'edit');
+      localStorage.setItem(modeKey, next ? 'preview' : 'edit');
       return next;
     });
   }
@@ -31,9 +37,9 @@ export const ScratchpadWidget: React.FC<Props> = ({ value, onChange }) => {
     : '';
 
   return (
-    <div className="widget scratchpad-widget" onClick={e => e.stopPropagation()}>
+    <div className={`widget scratchpad-widget ${className}`} onClick={e => e.stopPropagation()}>
       <div className="widget-header">
-        <span className="title">Scratchpad</span>
+        <span className="title">{title}</span>
         <div className="actions">
           <button
             className="ghost icon"
@@ -53,7 +59,7 @@ export const ScratchpadWidget: React.FC<Props> = ({ value, onChange }) => {
         <textarea
           value={value}
           onChange={e => onChange(e.target.value)}
-          placeholder="Markdown notes…"
+          placeholder={placeholder}
           spellCheck={false}
         />
       )}

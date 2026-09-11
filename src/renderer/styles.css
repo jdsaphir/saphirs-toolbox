@@ -371,14 +371,28 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 
 /* ─────────────────────────── Scratchpad widget ───────────────────────────── */
 
-.scratchpad-widget {
+/* Column beside the to-do list: the day's notes stacked over the permanent
+   scratchpad. `contain: size` stops the column from contributing to the row's
+   height, so the to-do list alone sets it and the column stretches to match —
+   long notes scroll inside their pad instead of growing the whole row. */
+.notes-column {
   width: 360px;
   display: flex;
   flex-direction: column;
+  gap: 10px;
+  contain: size;
+}
+.notes-column .daily-notes { flex: 1 1 0; }
+.notes-column .permanent-notes { flex: 1.8 1 0; }
+
+.scratchpad-widget {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 .scratchpad-widget textarea {
   flex: 1;
-  min-height: 200px;
+  min-height: 0;
   resize: none;
   font-family: 'Consolas', 'Cascadia Mono', 'Courier New', monospace;
   font-size: 12px;
@@ -386,7 +400,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 }
 .scratchpad-preview {
   flex: 1;
-  min-height: 200px;
+  min-height: 0;
   overflow-y: auto;
   padding: 6px 8px;
   font-size: 12px;

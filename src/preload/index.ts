@@ -38,6 +38,10 @@ const api = {
   openMarkdown: () => ipcRenderer.invoke(IPC.ScratchpadOpen) as Promise<string | null>,
   saveMarkdown: (content: string) => ipcRenderer.invoke(IPC.ScratchpadSave, content) as Promise<boolean>,
 
+  // Permanent scratchpad
+  getPermanentScratchpad: () => ipcRenderer.invoke(IPC.PermanentScratchpadGet) as Promise<string>,
+  setPermanentScratchpad: (content: string) => ipcRenderer.invoke(IPC.PermanentScratchpadSet, content) as Promise<boolean>,
+
   // Timer pill
   broadcastTimer: (state: TimerState | null) => ipcRenderer.send(IPC.TimerBroadcast, state),
   onTimerTick: (cb: (state: TimerState | null) => void) => {

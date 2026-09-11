@@ -8,10 +8,12 @@ import {
   createSheet,
   deleteSheet,
   getOrCreateLatestSheet,
+  getPermanentScratchpad,
   getSettings,
   getSheet,
   initDb,
   listSheets,
+  setPermanentScratchpad,
   setSettings,
   updateSheet,
 } from './db';
@@ -168,6 +170,13 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.SheetUpdate, (_e, sheet: Sheet) => updateSheet(sheet));
   ipcMain.handle(IPC.SheetDelete, (_e, id: number) => {
     deleteSheet(id);
+    return true;
+  });
+
+  // ── Permanent scratchpad ───────────────────────────────────────────────────
+  ipcMain.handle(IPC.PermanentScratchpadGet, () => getPermanentScratchpad());
+  ipcMain.handle(IPC.PermanentScratchpadSet, (_e, content: string) => {
+    setPermanentScratchpad(content);
     return true;
   });
 

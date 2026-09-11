@@ -29,6 +29,10 @@ export const IPC = {
   ScratchpadOpen: 'scratchpad:open',
   ScratchpadSave: 'scratchpad:save',
 
+  // Permanent scratchpad (not tied to any sheet)
+  PermanentScratchpadGet: 'scratchpad:permanent-get',
+  PermanentScratchpadSet: 'scratchpad:permanent-set',
+
   // Timer (renderer -> main for the pill broadcast)
   TimerBroadcast: 'timer:broadcast',
   TimerTick: 'timer:tick', // main -> dolphin renderer
