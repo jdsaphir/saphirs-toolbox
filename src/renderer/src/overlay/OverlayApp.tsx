@@ -217,8 +217,9 @@ export const OverlayApp: React.FC = () => {
     : { position: 'absolute', right: L.W - L.clusterRight, top: L.toolbarTop };
 
   // Active tool — appears beside the toolbar buttons, growing away from the
-  // dolphin, vertically aligned with the toolbar. If the tool would overflow
-  // the screen, it nudges back inside via the clamp below.
+  // dolphin, vertically aligned with the toolbar. TOOL_W and the 360px height
+  // are rough estimates; tools vary in size (Settings is much taller), so
+  // DraggableWindow clamps the measured window back inside the screen.
   const TOOL_W = 240;
   const TOOL_OFFSET = 160; // approximate width of the toolbar buttons row + gap
   let toolLeft: number;
