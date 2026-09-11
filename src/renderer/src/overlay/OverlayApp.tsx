@@ -26,7 +26,9 @@ export const OverlayApp: React.FC = () => {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [sheets, setSheets] = useState<SheetSummary[]>([]);
   const [sheet, setSheet] = useState<Sheet | null>(null);
-  const [permanentNotes, setPermanentNotes] = useState('');
+  // null until loaded; the widgets don't render before then, so a late load
+  // can never overwrite an edit.
+  const [permanentNotes, setPermanentNotes] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<ToolId>(null);
   const [timerState, setTimerState] = useState<TimerState>({ mode: 'stopwatch', running: false, seconds: 0 });
 
@@ -198,7 +200,7 @@ export const OverlayApp: React.FC = () => {
     };
   }, [dolphinCenter, settings]);
 
-  if (!open || !sheet || !settings || !layout) return <div className="overlay-root" onClick={close} />;
+  if (!open || !sheet || !settings || !layout || permanentNotes === null) return <div className="overlay-root" onClick={close} />;
 
   const L = layout;
 
