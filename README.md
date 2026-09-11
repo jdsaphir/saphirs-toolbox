@@ -10,7 +10,9 @@ A floating utility companion for Windows. A small dolphin button hovers over eve
 - **To-do sheets** — 18 rows per sheet, with rich checkbox states (in progress, done, meeting, deferred, delegated, important, comment, optional, personal, follow-up, canceled, and reserved states for future use). Drag rows to reorder.
 - **Date header** — type any date in the title (e.g. `5/12/2026`) and it displays as "Tuesday, May 12th, 2026 (Week 20)".
 - **Sheet history** — unlimited sheets, navigated with `‹ ›` or the sheets dropdown.
-- **Scratchpad** — always visible alongside the to-do list. Open and save `.md` files.
+- **Notes** — two Markdown pads beside the to-do list, each with its own edit/preview toggle and `.md` open/save:
+  - **Day Notes** — belongs to the displayed sheet, so every day has its own notes.
+  - **Scratchpad** — permanent; stays the same whichever day is displayed.
 - **Calculator** — basic arithmetic with keyboard support.
 - **Calendar** — month grid with ISO week numbers; click a date to open its task list (or create one on the spot). Dates that already have a list are marked with a dot, and a "Today" button jumps back to the current month. Week start (Sunday/Monday) is configurable in settings.
 - **Timer / Stopwatch / Pomodoro** — runs in the background; remaining time appears as a pill above the dolphin icon. Timer length, and the Pomodoro work and break lengths, are set per session in the widget (Pomodoro defaults to 25 / 5).

@@ -26,10 +26,13 @@ export const OverlayApp: React.FC = () => {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [sheets, setSheets] = useState<SheetSummary[]>([]);
   const [sheet, setSheet] = useState<Sheet | null>(null);
+  // null until loaded; the widgets don't render before then, so a late load
+  // can never overwrite an edit.
+  const [permanentNotes, setPermanentNotes] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<ToolId>(null);
   const [timerState, setTimerState] = useState<TimerState>({ mode: 'stopwatch', running: false, seconds: 0 });
 
-  // Mount: load settings + latest sheet + sheet list
+  // Mount: load settings + latest sheet + sheet list + permanent scratchpad
   useEffect(() => {
     const applySettings = (s: Settings) => {
       setSettings(s);
@@ -40,6 +43,7 @@ export const OverlayApp: React.FC = () => {
       if (s) setSheet(s);
       api.listSheets().then(setSheets);
     });
+    api.getPermanentScratchpad().then(setPermanentNotes);
     const off1 = api.onSettingsChanged(applySettings);
     const off2 = api.onToolboxState(s => {
       setOpen(s.open);
@@ -81,6 +85,17 @@ export const OverlayApp: React.FC = () => {
       api.updateSheet(sheet);
     }
   }
+
+  // Persist permanent scratchpad edits debounced (independent of the sheet)
+  const permanentTimerRef = useRef<number | null>(null);
+  const persistPermanentNotes = useCallback((v: string) => {
+    setPermanentNotes(v);
+    if (permanentTimerRef.current) window.clearTimeout(permanentTimerRef.current);
+    permanentTimerRef.current = window.setTimeout(() => {
+      permanentTimerRef.current = null;
+      api.setPermanentScratchpad(v);
+    }, 250);
+  }, []);
 
   async function selectSheet(id: number) {
     flushPersist();
@@ -185,7 +200,7 @@ export const OverlayApp: React.FC = () => {
     };
   }, [dolphinCenter, settings]);
 
-  if (!open || !sheet || !settings || !layout) return <div className="overlay-root" onClick={close} />;
+  if (!open || !sheet || !settings || !layout || permanentNotes === null) return <div className="overlay-root" onClick={close} />;
 
   const L = layout;
 
@@ -218,34 +233,42 @@ export const OverlayApp: React.FC = () => {
     ? Math.min(L.H - 360 - L.PADDING, L.toolbarTop + L.TOOLBAR_H + L.GAP)
     : Math.max(L.PADDING, L.toolbarTop - 360 - L.GAP);
 
+  // Day notes live on the sheet (they follow the displayed to-do list); the
+  // permanent scratchpad is stored separately and never changes with the day.
+  const notesColumn = (
+    <div className="notes-column">
+      <ScratchpadWidget
+        className="daily-notes"
+        title="Day Notes"
+        value={sheet.scratchpad}
+        onChange={v => persistSheet({ ...sheet, scratchpad: v })}
+        modeKey="scratchpad-mode"
+        placeholder="Notes for this day…"
+      />
+      <ScratchpadWidget
+        className="permanent-notes"
+        title="Scratchpad"
+        value={permanentNotes}
+        onChange={persistPermanentNotes}
+        modeKey="permanent-scratchpad-mode"
+      />
+    </div>
+  );
+  const todoWidget = (
+    <TodoWidget
+      sheet={sheet}
+      sheets={sheets}
+      checkboxMode={settings.checkboxMode}
+      onChange={persistSheet}
+      onSelectSheet={selectSheet}
+      onCreateSheet={createSheet}
+      onDeleteSheet={deleteSheet}
+    />
+  );
   const renderWidgets = () => (
-    L.side === 'right' ? (
-      <>
-        <TodoWidget
-          sheet={sheet}
-          sheets={sheets}
-          checkboxMode={settings.checkboxMode}
-          onChange={persistSheet}
-          onSelectSheet={selectSheet}
-          onCreateSheet={createSheet}
-          onDeleteSheet={deleteSheet}
-        />
-        <ScratchpadWidget value={sheet.scratchpad} onChange={v => persistSheet({ ...sheet, scratchpad: v })} />
-      </>
-    ) : (
-      <>
-        <ScratchpadWidget value={sheet.scratchpad} onChange={v => persistSheet({ ...sheet, scratchpad: v })} />
-        <TodoWidget
-          sheet={sheet}
-          sheets={sheets}
-          checkboxMode={settings.checkboxMode}
-          onChange={persistSheet}
-          onSelectSheet={selectSheet}
-          onCreateSheet={createSheet}
-          onDeleteSheet={deleteSheet}
-        />
-      </>
-    )
+    L.side === 'right'
+      ? <>{todoWidget}{notesColumn}</>
+      : <>{notesColumn}{todoWidget}</>
   );
 
   return (

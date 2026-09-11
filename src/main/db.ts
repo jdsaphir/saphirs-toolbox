@@ -61,6 +61,12 @@ export function initDb(): void {
       PRIMARY KEY (sheet_id, position),
       FOREIGN KEY (sheet_id) REFERENCES sheets(id) ON DELETE CASCADE
     );
+    -- Free-standing notes that don't belong to a sheet, keyed by name.
+    CREATE TABLE IF NOT EXISTS notes (
+      key         TEXT PRIMARY KEY,
+      content     TEXT NOT NULL DEFAULT '',
+      updated_at  TEXT NOT NULL
+    );
   `);
 
   migrateTodosToCombinableStatuses();
@@ -242,4 +248,18 @@ export function updateSheet(sheet: Sheet): Sheet {
 export function deleteSheet(id: number): void {
   db.prepare('DELETE FROM todos WHERE sheet_id = ?').run(id);
   db.prepare('DELETE FROM sheets WHERE id = ?').run(id);
+}
+
+// ── Permanent scratchpad ─────────────────────────────────────────────────────
+
+const PERMANENT_SCRATCHPAD_KEY = 'permanent-scratchpad';
+
+export function getPermanentScratchpad(): string {
+  const row = db.prepare('SELECT content FROM notes WHERE key = ?').get(PERMANENT_SCRATCHPAD_KEY) as any;
+  return row?.content ?? '';
+}
+
+export function setPermanentScratchpad(content: string): void {
+  db.prepare('INSERT INTO notes (key, content, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET content = excluded.content, updated_at = excluded.updated_at')
+    .run(PERMANENT_SCRATCHPAD_KEY, content, new Date().toISOString());
 }
