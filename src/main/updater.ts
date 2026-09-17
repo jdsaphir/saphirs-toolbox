@@ -1,20 +1,106 @@
 // Auto-update wiring. Only meaningful for the NSIS-installed build: for the
 // portable build electron-updater can't replace a running .exe, and the dev
-// build is unpackaged, so index.ts skips both.
+// build is unpackaged. Both report 'unsupported' so the Settings panel can say
+// so instead of showing a check that would never find anything.
 
 import { execFileSync } from 'node:child_process';
+import { app } from 'electron';
 import { autoUpdater } from 'electron-updater';
+import type { Settings, UpdateCheckInterval, UpdateStatus } from '../shared/types';
+
+const INTERVAL_MS: Record<UpdateCheckInterval, number | null> = {
+  hourly: 60 * 60 * 1000,
+  daily: 24 * 60 * 60 * 1000,
+  startup: null,
+  never: null,
+};
 
 let updateReady = false;
+let status: UpdateStatus = { state: 'idle' };
+let statusListener: ((s: UpdateStatus) => void) | null = null;
+let timer: NodeJS.Timeout | null = null;
+let checking = false;
 
-export function initAutoUpdater(): void {
+// The portable build runs from a temp folder that changes on every launch, so
+// there is nothing for the updater to replace.
+function supported(): boolean {
+  return app.isPackaged && !process.env.PORTABLE_EXECUTABLE_FILE;
+}
+
+export function onUpdateStatusChanged(listener: (s: UpdateStatus) => void): void {
+  statusListener = listener;
+}
+
+export function getUpdateStatus(): UpdateStatus {
+  return supported() ? status : { state: 'unsupported' };
+}
+
+function setStatus(next: UpdateStatus) {
+  status = next;
+  statusListener?.(getUpdateStatus());
+}
+
+export function initAutoUpdater(settings: Settings): void {
+  if (!supported()) return;
+
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
-  autoUpdater.on('error', err => console.error('[autoUpdater]', err));
-  autoUpdater.on('update-downloaded', () => { updateReady = true; });
-  autoUpdater.checkForUpdatesAndNotify().catch(err => {
-    console.error('[autoUpdater] check failed:', err);
+
+  autoUpdater.on('checking-for-update', () => setStatus({ state: 'checking' }));
+  autoUpdater.on('update-available', info => setStatus({ state: 'available', version: info.version }));
+  autoUpdater.on('update-not-available', info => setStatus({
+    state: 'up-to-date',
+    version: info.version,
+    checkedAt: new Date().toISOString(),
+  }));
+  autoUpdater.on('download-progress', p => setStatus({
+    state: 'downloading',
+    version: status.version,
+    percent: Math.round(p.percent),
+  }));
+  autoUpdater.on('update-downloaded', info => {
+    updateReady = true;
+    setStatus({ state: 'ready', version: info.version, checkedAt: new Date().toISOString() });
   });
+  autoUpdater.on('error', err => {
+    console.error('[autoUpdater]', err);
+    setStatus({ state: 'error', version: status.version, error: String(err?.message ?? err) });
+  });
+
+  // Every setting except 'never' still checks on launch: that is the one moment
+  // an update can actually be installed, since electron-updater applies it on
+  // the way out.
+  if (settings.updateCheckInterval !== 'never') void checkForUpdates();
+  scheduleUpdateChecks(settings.updateCheckInterval);
+}
+
+// Re-armed whenever the setting changes. An update that is already downloaded
+// installs on quit, so there is nothing to gain from checking past that point.
+export function scheduleUpdateChecks(interval: UpdateCheckInterval): void {
+  if (timer) { clearInterval(timer); timer = null; }
+  if (!supported()) return;
+  const ms = INTERVAL_MS[interval];
+  if (ms == null) return;
+  timer = setInterval(() => {
+    if (!updateReady) void checkForUpdates();
+  }, ms);
+}
+
+export async function checkForUpdates(): Promise<UpdateStatus> {
+  if (!supported()) return getUpdateStatus();
+  // A manual check while one is already running would report the same result
+  // twice and confuse the status line.
+  if (checking) return getUpdateStatus();
+  checking = true;
+  try {
+    await autoUpdater.checkForUpdates();
+  } catch (err) {
+    console.error('[autoUpdater] check failed:', err);
+    setStatus({ state: 'error', error: String((err as Error)?.message ?? err) });
+  } finally {
+    checking = false;
+  }
+  return getUpdateStatus();
 }
 
 // An MCP bridge is this same executable run as plain Node, started from the

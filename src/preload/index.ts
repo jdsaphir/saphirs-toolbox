@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC } from '../shared/ipc';
-import type { AgentActivity, AgentServerStatus, DataChange, Settings, Sheet, TimerState } from '../shared/types';
+import type { AgentActivity, AgentServerStatus, DataChange, Settings, Sheet, TimerState, UpdateStatus } from '../shared/types';
 
 const api = {
   // Toolbox
@@ -96,6 +96,13 @@ const api = {
   // App control
   quitApp: () => ipcRenderer.invoke(IPC.AppQuit) as Promise<boolean>,
   getAppVersion: () => ipcRenderer.invoke(IPC.AppVersion) as Promise<string>,
+  getUpdateStatus: () => ipcRenderer.invoke(IPC.UpdateStatusGet) as Promise<UpdateStatus>,
+  checkForUpdates: () => ipcRenderer.invoke(IPC.UpdateCheckNow) as Promise<UpdateStatus>,
+  onUpdateStatusChanged: (cb: (s: UpdateStatus) => void) => {
+    const listener = (_e: any, s: UpdateStatus) => cb(s);
+    ipcRenderer.on(IPC.UpdateStatusChanged, listener);
+    return () => ipcRenderer.removeListener(IPC.UpdateStatusChanged, listener);
+  },
   onOpenSettingsTab: (cb: () => void) => {
     const listener = () => cb();
     ipcRenderer.on(IPC.OpenSettingsTab, listener);

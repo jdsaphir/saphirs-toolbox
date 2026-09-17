@@ -3,7 +3,14 @@ import fs from 'fs';
 import path from 'path';
 import { IPC } from '../shared/ipc';
 import { createTray } from './tray';
-import { closeLeftoverBridges, initAutoUpdater } from './updater';
+import {
+  checkForUpdates,
+  closeLeftoverBridges,
+  getUpdateStatus,
+  initAutoUpdater,
+  onUpdateStatusChanged,
+  scheduleUpdateChecks,
+} from './updater';
 import {
   createSheet,
   deleteSheet,
@@ -125,7 +132,8 @@ app.whenReady().then(() => {
   // portable build, electron-updater can't replace a running .exe so this
   // call is effectively a no-op (it logs an error and moves on). The dev
   // build is unpackaged and skipped entirely.
-  if (app.isPackaged) initAutoUpdater();
+  initAutoUpdater(settings);
+  onUpdateStatusChanged(st => broadcast(IPC.UpdateStatusChanged, st));
 
   // ── Toolbox ────────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.ToolboxToggle, () => {
@@ -162,6 +170,9 @@ app.whenReady().then(() => {
     if (after.shortcut !== before.shortcut) registerShortcut(after.shortcut);
     if (after.agentApiEnabled !== before.agentApiEnabled || after.agentApiPort !== before.agentApiPort) {
       configureAgentServer(after);
+    }
+    if (after.updateCheckInterval !== before.updateCheckInterval) {
+      scheduleUpdateChecks(after.updateCheckInterval);
     }
     broadcast(IPC.SettingsChanged, after);
     return after;
@@ -235,6 +246,8 @@ app.whenReady().then(() => {
     return true;
   });
   ipcMain.handle(IPC.AppVersion, () => app.getVersion());
+  ipcMain.handle(IPC.UpdateStatusGet, () => getUpdateStatus());
+  ipcMain.handle(IPC.UpdateCheckNow, () => checkForUpdates());
 
   ipcMain.handle(IPC.ClipboardWrite, (_e, text: string) => {
     clipboard.writeText(text);

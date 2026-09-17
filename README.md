@@ -20,7 +20,7 @@ A floating utility companion for Windows. A small dolphin button hovers over eve
   - **On this computer** (Claude Code, Claude Desktop & Cowork, Codex, or anything that speaks MCP or HTTP): connect them once from the Agent Console, and their changes show up in the toolbox right away.
   - **On another computer**: the **Agent Console** (🤖) runs commands an assistant writes for you. Copy the AI instructions into your chat, then paste the commands it produces; the console previews what each one does before you run it.
   - An **Activity** log lists everything agents did.
-- **Settings** — rebind the global shortcut by pressing keys; switch checkbox interaction mode (popup palette vs. left-click cycle); pick dolphin icon style and customize its colors (body/eye, plus the colors shown while the toolbox is open); set the app accent color; control toolbar expansion direction; choose whether the calendar week starts on Sunday or Monday. The installed version is shown beside the Quit button.
+- **Settings** — rebind the global shortcut by pressing keys; switch checkbox interaction mode (popup palette vs. left-click cycle); pick dolphin icon style and customize its colors (body/eye, plus the colors shown while the toolbox is open); set the app accent color; control toolbar expansion direction; choose whether the calendar week starts on Sunday or Monday. The installed version is shown beside the Quit button, with how often to check for updates (every hour, every day, only at startup, or never) and a **Check now** button.
 
 ## Checkbox states
 
@@ -116,7 +116,7 @@ git push && git push --tags
 # 3. On GitHub, review the draft release, edit notes, click Publish
 ```
 
-Installed (NSIS) builds check for updates on launch via `electron-updater`. Portable builds don't auto-update — users grab a new file from the Releases page.
+Installed (NSIS) builds check for updates via `electron-updater`: on launch, and then on the interval set in Settings (hourly by default). A found release downloads in the background and installs on quit. Portable and dev builds can't replace the running executable, so they report as much in Settings instead of offering a check.
 
 An MCP bridge is the app's own executable run as plain Node, started from the install folder by whichever AI client connected to it. The client keeps it alive after the app quits, and Windows won't let the installer delete a running `.exe`, so both ends close those leftovers before the old version is removed: `build/installer.nsh` in the installer, and `closeLeftoverBridges()` in `src/main/updater.ts` on the way out. Clients start a fresh bridge on their next call.
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../shared/api';
-import type { Settings } from '../../../shared/types';
+import type { Settings, UpdateCheckInterval, UpdateStatus } from '../../../shared/types';
 
 interface Props {
   settings: Settings;
@@ -34,9 +34,15 @@ export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
   const [local, setLocal] = useState<Settings>(settings);
   const [recording, setRecording] = useState(false);
   const [version, setVersion] = useState('');
+  const [update, setUpdate] = useState<UpdateStatus>({ state: 'idle' });
 
   useEffect(() => setLocal(settings), [settings]);
   useEffect(() => { api.getAppVersion().then(setVersion); }, []);
+  useEffect(() => {
+    api.getUpdateStatus().then(setUpdate);
+    const off = api.onUpdateStatusChanged(setUpdate);
+    return () => { off(); };
+  }, []);
 
   function save(patch: Partial<Settings>) {
     setLocal(prev => ({ ...prev, ...patch }));
@@ -139,6 +145,32 @@ export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
         <ColorField label="Accent color" value={local.accentColor} onChange={v => save({ accentColor: v })} />
       </div>
 
+      <div className="section-label">Updates</div>
+      {update.state === 'unsupported' ? (
+        <div className="sub">This build doesn't update itself. Installed builds do; the portable one is replaced by downloading a new file.</div>
+      ) : (
+        <>
+          <div className="field">
+            <label>Check for updates</label>
+            <select
+              value={local.updateCheckInterval}
+              onChange={e => save({ updateCheckInterval: e.target.value as UpdateCheckInterval })}
+            >
+              <option value="hourly">Every hour</option>
+              <option value="daily">Every day</option>
+              <option value="startup">Only at startup</option>
+              <option value="never">Never</option>
+            </select>
+          </div>
+          <div className="update-row">
+            <button onClick={() => api.checkForUpdates().then(setUpdate)} disabled={update.state === 'checking' || update.state === 'downloading'}>
+              Check now
+            </button>
+            <span className={`update-status ${update.state}`}>{describeUpdate(update)}</span>
+          </div>
+        </>
+      )}
+
       <div className="settings-footer">
         <button
           onClick={() => { if (confirm("Quit Saphir's Toolbox?")) api.quitApp(); }}
@@ -153,6 +185,20 @@ export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
     </div>
   );
 };
+
+// One short line under the button. A new version installs on quit, so 'ready'
+// says that rather than offering a restart the app can't usefully force.
+function describeUpdate(u: UpdateStatus): string {
+  switch (u.state) {
+    case 'checking': return 'Checking…';
+    case 'available': return `Found v${u.version}`;
+    case 'downloading': return `Downloading v${u.version ?? ''} ${u.percent ?? 0}%`;
+    case 'ready': return `v${u.version} installs when you quit`;
+    case 'up-to-date': return 'Up to date';
+    case 'error': return u.error ? `Check failed: ${u.error}` : 'Check failed';
+    default: return '';
+  }
+}
 
 const ColorField: React.FC<{ label: string; value: string; onChange: (v: string) => void }> = ({ label, value, onChange }) => (
   <div className="color-field">

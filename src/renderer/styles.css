@@ -674,6 +674,15 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .settings-widget { width: 340px; max-height: 70vh; overflow-y: auto; }
 .settings-widget .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
 .settings-widget .field label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+/* Check now on the left, what it found on the right. The status wraps rather
+   than stretching the panel, since an error carries a whole message. */
+.update-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.update-row button { flex: 0 0 auto; }
+.update-status { flex: 1; min-width: 0; font-size: 11px; color: var(--text-dim); overflow-wrap: anywhere; }
+.update-status.ready { color: var(--success); }
+.update-status.error { color: var(--danger); }
+.settings-widget .sub { font-size: 11px; color: var(--text-dim); line-height: 1.45; }
+
 /* Quit on the left, the installed version on the right. */
 .settings-footer {
   display: flex;
