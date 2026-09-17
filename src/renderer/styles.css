@@ -68,10 +68,15 @@ input[type="text"], input[type="number"], input[type="date"], textarea, select {
   outline: none;
 }
 /* The spin buttons and the dropdown list a select pops open are drawn by the
-   UA, so they only go dark via color-scheme. Without it the list is a light
-   popup that inherits this theme's light text — unreadable on every row except
-   the highlighted one. */
+   UA, not by the page, so they follow color-scheme rather than any CSS on the
+   control. Without it the list is a light popup carrying this theme's light
+   text — unreadable on every row but the highlighted one.
+   The rows then need opaque colors of their own, because the background above
+   is translucent: the popup paints that 25% black over its own base, which is
+   what tints the list in the first place. #1c2638 is --bg-widget-soft without
+   the transparency. */
 input[type="number"], select { color-scheme: dark; }
+select option { background-color: #1c2638; color: var(--text); }
 input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 
 /* The UA scrollbar is a wide opaque bar with arrow buttons at both ends, which
