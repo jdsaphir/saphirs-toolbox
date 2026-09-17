@@ -187,17 +187,26 @@ export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
 };
 
 // One short line under the button. A new version installs on quit, so 'ready'
-// says that rather than offering a restart the app can't usefully force.
+// says that rather than offering a restart the app can't usefully force. 'Idle'
+// only shows when checks are turned off, and still says something: the row
+// holds space for this line either way.
 function describeUpdate(u: UpdateStatus): string {
   switch (u.state) {
     case 'checking': return 'Checking…';
     case 'available': return `Found v${u.version}`;
     case 'downloading': return `Downloading v${u.version ?? ''} ${u.percent ?? 0}%`;
     case 'ready': return `v${u.version} installs when you quit`;
-    case 'up-to-date': return 'Up to date';
+    case 'up-to-date': return `Up to date${u.checkedAt ? ` · ${shortTime(u.checkedAt)}` : ''}`;
     case 'error': return u.error ? `Check failed: ${u.error}` : 'Check failed';
-    default: return '';
+    default: return 'Not checked yet';
   }
+}
+
+// When the last check ran, so a schedule that quietly stopped working is
+// visible rather than indistinguishable from one that keeps finding nothing.
+function shortTime(iso: string): string {
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 const ColorField: React.FC<{ label: string; value: string; onChange: (v: string) => void }> = ({ label, value, onChange }) => (

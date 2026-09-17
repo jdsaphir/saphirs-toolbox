@@ -45,7 +45,7 @@ export type DolphinIconVariant = 'duotone' | 'solid';
 export type WeekStart = 'sunday' | 'monday';
 // How often the installed build looks for a new release. 'startup' keeps the
 // original behaviour (the check on launch and nothing more); 'never' turns it
-// off entirely. Hourly and daily check on launch as well.
+// off entirely. The hourly and daily settings also check on launch.
 export type UpdateCheckInterval = 'hourly' | 'daily' | 'startup' | 'never';
 
 export interface Settings {

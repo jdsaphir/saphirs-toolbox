@@ -47,7 +47,13 @@ export function initAutoUpdater(settings: Settings): void {
   autoUpdater.autoInstallOnAppQuit = true;
 
   autoUpdater.on('checking-for-update', () => setStatus({ state: 'checking' }));
-  autoUpdater.on('update-available', info => setStatus({ state: 'available', version: info.version }));
+  autoUpdater.on('update-available', info => {
+    // A re-check finds the pending release again. Saying 'Found v1.4.0'
+    // after already saying it installs on quit reads like a step backwards,
+    // so only move off 'ready' when the release is a different one.
+    if (status.state === 'ready' && status.version === info.version) return;
+    setStatus({ state: 'available', version: info.version });
+  });
   autoUpdater.on('update-not-available', info => setStatus({
     state: 'up-to-date',
     version: info.version,
@@ -74,16 +80,17 @@ export function initAutoUpdater(settings: Settings): void {
   scheduleUpdateChecks(settings.updateCheckInterval);
 }
 
-// Re-armed whenever the setting changes. An update that is already downloaded
-// installs on quit, so there is nothing to gain from checking past that point.
+// Re-armed whenever the setting changes. Checks carry on after one update is
+// downloaded: this app is meant to sit in the tray for days, long enough for
+// the pending release to be superseded, and electron-updater installs whichever
+// it fetched last. A re-check that finds the same release again costs one small
+// request, because the downloaded file is reused rather than fetched twice.
 export function scheduleUpdateChecks(interval: UpdateCheckInterval): void {
   if (timer) { clearInterval(timer); timer = null; }
   if (!supported()) return;
   const ms = INTERVAL_MS[interval];
   if (ms == null) return;
-  timer = setInterval(() => {
-    if (!updateReady) void checkForUpdates();
-  }, ms);
+  timer = setInterval(() => { void checkForUpdates(); }, ms);
 }
 
 export async function checkForUpdates(): Promise<UpdateStatus> {
