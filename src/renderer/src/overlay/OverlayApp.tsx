@@ -175,6 +175,9 @@ export const OverlayApp: React.FC = () => {
       api.listSheets().then(setSheets);
     });
 
+    // Main holds agent messages for the overlay until this arrives.
+    api.agentRendererReady();
+
     return () => { offRequest(); offData(); offShow(); };
   }, []);
 

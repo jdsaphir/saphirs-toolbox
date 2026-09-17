@@ -424,6 +424,7 @@ export function validateToolArgs(tool: AgentTool, args: unknown): string | null 
   if ('row' in props && 'match' in props) {
     if (a.row === undefined && a.match === undefined) return 'Say which to-do: give "row" or "match".';
     if (a.row !== undefined && a.match !== undefined) return 'Give either "row" or "match", not both.';
+    if (typeof a.match === 'string' && a.match.trim() === '') return '"match" must not be blank.';
   }
   if ('sheetId' in props && a.sheetId !== undefined && a.date !== undefined) return 'Give either "date" or "sheetId", not both.';
   if (tool.name === 'delete_day' && a.date === undefined && a.sheetId === undefined) return 'Say which day to delete: give "date" (or "sheetId").';

@@ -26,7 +26,7 @@ export interface AgentHooks {
   notifyChanged: (change: DataChange) => void;
   // The timer lives in the overlay renderer.
   timer: (action: TimerAction | null) => Promise<TimerState>;
-  showSheet: (sheetId: number) => void;
+  showSheet: (sheetId: number) => Promise<void>;
   onActivity: (entry: AgentActivity) => void;
 }
 
@@ -417,10 +417,10 @@ const HANDLERS: Record<string, Handler> = {
     breakMinutes: a.breakMinutes,
   })),
 
-  show_day: (a, h) => {
+  show_day: async (a, h) => {
     const { sheet, created } = targetSheet(a, true);
     if (created) h.notifyChanged({ sheetIds: [sheet.id], deletedSheetIds: [], scratchpad: false });
-    h.showSheet(sheet.id);
+    await h.showSheet(sheet.id);
     return { shown: true, sheetId: sheet.id, label: dayLabel(sheet), ...(created ? { created: true } : {}) };
   },
 };

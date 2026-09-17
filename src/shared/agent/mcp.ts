@@ -2,7 +2,7 @@
 // the app's HTTP endpoint and the stdio bridge both feed JSON-RPC messages
 // through handleMcpMessage and send back whatever it returns.
 
-import { AGENT_TOOLS, AgentError, getTool, validateToolArgs } from './catalog';
+import { AGENT_TOOLS, AgentError, getTool } from './catalog';
 
 // Newest first. We answer with the client's version when we know it,
 // otherwise with our newest; tools-only servers are the same across these.
@@ -15,8 +15,9 @@ const INSTRUCTIONS =
 
 export interface McpContext {
   version: string;
-  // Runs a validated tool call. Throw AgentError for problems the caller
-  // should see; anything else is reported as an internal error.
+  // Runs a tool call, validating its arguments (so invalid calls are recorded
+  // in the activity log too). Throw AgentError for problems the caller should
+  // see; anything else is reported as an internal error.
   callTool: (name: string, args: Record<string, unknown>) => Promise<unknown>;
 }
 
@@ -89,8 +90,6 @@ export async function handleMcpMessage(msg: JsonRpcMessage, ctx: McpContext): Pr
       const args = msg.params?.arguments ?? {};
       const tool = typeof name === 'string' ? getTool(name) : undefined;
       if (!tool) return error(id, -32602, `Unknown tool: ${String(name)}`);
-      const invalid = validateToolArgs(tool, args);
-      if (invalid) return result(id, toolResult(invalid, true));
       try {
         return result(id, toolResult(await ctx.callTool(tool.name, args)));
       } catch (e) {

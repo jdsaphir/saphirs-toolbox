@@ -32,7 +32,7 @@ import {
 import { DataChange, Settings, Sheet, TimerState } from '../shared/types';
 import type { TimerAction } from '../shared/timer-actions';
 import { getAgentActivity, initAgentExecutor, runAgentTool } from './agent/executor';
-import { initRendererRequests, requestRenderer } from './agent/renderer-requests';
+import { initRendererRequests, requestRenderer, whenOverlayReady } from './agent/renderer-requests';
 import {
   configureAgentServer,
   generateAgentToken,
@@ -254,7 +254,8 @@ app.whenReady().then(() => {
     flushRenderer: () => requestRenderer<void>('flush', null, 1500).catch(() => undefined),
     notifyChanged: (change: DataChange) => getOverlayWindow()?.webContents.send(IPC.DataChanged, change),
     timer: (action: TimerAction | null) => requestRenderer<TimerState>('timer', action, 3000),
-    showSheet: (sheetId: number) => {
+    showSheet: async (sheetId: number) => {
+      await whenOverlayReady(5000);
       openOverlay();
       getOverlayWindow()?.webContents.send(IPC.AgentShowSheet, sheetId);
     },

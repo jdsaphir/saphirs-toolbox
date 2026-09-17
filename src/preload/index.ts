@@ -80,6 +80,7 @@ const api = {
     ipcRenderer.on(IPC.AgentRendererRequest, listener);
     return () => ipcRenderer.removeListener(IPC.AgentRendererRequest, listener);
   },
+  agentRendererReady: () => ipcRenderer.send(IPC.AgentRendererReady),
   onAgentShowSheet: (cb: (sheetId: number) => void) => {
     const listener = (_e: unknown, id: number) => cb(id);
     ipcRenderer.on(IPC.AgentShowSheet, listener);

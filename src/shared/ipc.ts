@@ -53,6 +53,7 @@ export const IPC = {
   AgentActivity: 'agent:activity',            // main -> renderers: one new entry
   AgentRendererRequest: 'agent:renderer-request', // main -> overlay: { id, kind, payload }
   AgentRendererReply: 'agent:renderer-reply',     // overlay -> main: { id, result?, error? }
+  AgentRendererReady: 'agent:renderer-ready',     // overlay -> main: its agent listeners are registered
   AgentShowSheet: 'agent:show-sheet',         // main -> overlay: sheet id to display
   DataChanged: 'data:changed',                // main -> overlay: DataChange
 } as const;
