@@ -67,8 +67,11 @@ input[type="text"], input[type="number"], input[type="date"], textarea, select {
   padding: 4px 6px;
   outline: none;
 }
-/* The spin buttons are drawn by the UA, so they only go dark via color-scheme. */
-input[type="number"] { color-scheme: dark; }
+/* The spin buttons and the dropdown list a select pops open are drawn by the
+   UA, so they only go dark via color-scheme. Without it the list is a light
+   popup that inherits this theme's light text — unreadable on every row except
+   the highlighted one. */
+input[type="number"], select { color-scheme: dark; }
 input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 
 /* The UA scrollbar is a wide opaque bar with arrow buttons at both ends, which
