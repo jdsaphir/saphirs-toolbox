@@ -75,17 +75,23 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
    looks pasted on over the translucent widgets; styling it swaps that for a
    thin accent-tinted thumb on a transparent track. Listed per widget rather
    than set globally so the native bar stays on anything that is not one of
-   these panes. */
+   these panes. The settings panel is the scroller itself, so it takes the
+   rules directly rather than through a descendant selector. */
 .agent-widget ::-webkit-scrollbar,
-.scratchpad-widget ::-webkit-scrollbar { width: 8px; height: 8px; }
+.scratchpad-widget ::-webkit-scrollbar,
+.settings-widget::-webkit-scrollbar { width: 8px; height: 8px; }
 .agent-widget ::-webkit-scrollbar-track,
-.scratchpad-widget ::-webkit-scrollbar-track { background: transparent; }
+.scratchpad-widget ::-webkit-scrollbar-track,
+.settings-widget::-webkit-scrollbar-track { background: transparent; }
 .agent-widget ::-webkit-scrollbar-thumb,
-.scratchpad-widget ::-webkit-scrollbar-thumb { background: rgba(120, 170, 230, 0.25); border-radius: 4px; }
+.scratchpad-widget ::-webkit-scrollbar-thumb,
+.settings-widget::-webkit-scrollbar-thumb { background: rgba(120, 170, 230, 0.25); border-radius: 4px; }
 .agent-widget ::-webkit-scrollbar-thumb:hover,
-.scratchpad-widget ::-webkit-scrollbar-thumb:hover { background: rgba(120, 170, 230, 0.4); }
+.scratchpad-widget ::-webkit-scrollbar-thumb:hover,
+.settings-widget::-webkit-scrollbar-thumb:hover { background: rgba(120, 170, 230, 0.4); }
 .agent-widget ::-webkit-scrollbar-corner,
-.scratchpad-widget ::-webkit-scrollbar-corner { background: transparent; }
+.scratchpad-widget ::-webkit-scrollbar-corner,
+.settings-widget::-webkit-scrollbar-corner { background: transparent; }
 /* Styling the scrollbar drops the UA's arrow buttons but not the grabber a
    resizable textarea paints below them; drop its paint too, keep the drag. */
 .agent-widget ::-webkit-resizer,
