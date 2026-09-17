@@ -71,6 +71,26 @@ input[type="text"], input[type="number"], input[type="date"], textarea, select {
 input[type="number"] { color-scheme: dark; }
 input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 
+/* The UA scrollbar is a wide opaque bar with arrow buttons at both ends, which
+   looks pasted on over the translucent widgets; styling it swaps that for a
+   thin accent-tinted thumb on a transparent track. Listed per widget rather
+   than set globally so the native bar stays on anything that is not one of
+   these panes. */
+.agent-widget ::-webkit-scrollbar,
+.scratchpad-widget ::-webkit-scrollbar { width: 8px; height: 8px; }
+.agent-widget ::-webkit-scrollbar-track,
+.scratchpad-widget ::-webkit-scrollbar-track { background: transparent; }
+.agent-widget ::-webkit-scrollbar-thumb,
+.scratchpad-widget ::-webkit-scrollbar-thumb { background: rgba(120, 170, 230, 0.25); border-radius: 4px; }
+.agent-widget ::-webkit-scrollbar-thumb:hover,
+.scratchpad-widget ::-webkit-scrollbar-thumb:hover { background: rgba(120, 170, 230, 0.4); }
+.agent-widget ::-webkit-scrollbar-corner,
+.scratchpad-widget ::-webkit-scrollbar-corner { background: transparent; }
+/* Styling the scrollbar drops the UA's arrow buttons but not the grabber a
+   resizable textarea paints below them; drop its paint too, keep the drag. */
+.agent-widget ::-webkit-resizer,
+.scratchpad-widget ::-webkit-resizer { background: transparent; }
+
 /* ───────────────────────────── Dolphin window ────────────────────────────── */
 
 .dolphin-root {
@@ -683,11 +703,6 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 3px; }
   display: flex;
   flex-direction: column;
 }
-.agent-widget ::-webkit-scrollbar { width: 8px; height: 8px; }
-.agent-widget ::-webkit-scrollbar-track { background: transparent; }
-.agent-widget ::-webkit-scrollbar-thumb { background: rgba(120, 170, 230, 0.25); border-radius: 4px; }
-.agent-widget ::-webkit-scrollbar-thumb:hover { background: rgba(120, 170, 230, 0.4); }
-.agent-widget ::-webkit-scrollbar-corner { background: transparent; }
 .agent-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 8px; }
 .agent-tabs button { padding: 4px; font-size: 11px; }
 .agent-tabs button.active { background: var(--accent-dim); border-color: var(--accent); }
