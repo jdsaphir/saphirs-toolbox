@@ -79,7 +79,8 @@ export interface TimerState {
   pomodoroWorkMin?: number;
   pomodoroBreakMin?: number;
   // timer: the length it was set to, in minutes, so a reset (from the widget
-  // or an agent) knows what to go back to.
+  // or an agent) knows what to go back to. Like the pomodoro lengths, it's kept
+  // while another mode runs.
   timerMinutes?: number;
 }
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../shared/api';
 import { formatTimer } from '../../../shared/timer-format';
-import { breakMinutes, clampMinutes, MAX_MINUTES, timerMinutes, workMinutes } from '../../../shared/timer-actions';
+import { breakMinutes, clampMinutes, keepLengths, MAX_MINUTES, timerMinutes, workMinutes } from '../../../shared/timer-actions';
 import type { TimerState } from '../../../shared/types';
 
 // Timer state is owned here and broadcast (via main) to the dolphin pill.
@@ -37,28 +37,33 @@ export const Timer: React.FC<Props> = ({ state, setState, onClose }) => {
     };
   }
 
+  // Replaces the state, carrying over the lengths set for the other modes.
+  function replaceState(next: (s: TimerState) => TimerState) {
+    setState(s => ({ ...keepLengths(s), ...next(s) }));
+  }
+
   function setMode(mode: TimerState['mode']) {
-    if (mode === 'stopwatch') setState({ mode, running: false, seconds: 0 });
-    else if (mode === 'timer') setState({ mode, running: false, seconds: minInput * 60, timerMinutes: minInput });
-    else setState(pomodoroState('work', workInput, breakInput));
+    if (mode === 'stopwatch') replaceState(() => ({ mode, running: false, seconds: 0 }));
+    else if (mode === 'timer') replaceState(() => ({ mode, running: false, seconds: minInput * 60, timerMinutes: minInput }));
+    else replaceState(() => pomodoroState('work', workInput, breakInput));
   }
 
   function start() { setState(s => ({ ...s, running: true })); }
   function pause() { setState(s => ({ ...s, running: false })); }
   function reset() {
-    if (state.mode === 'stopwatch') setState({ mode: 'stopwatch', running: false, seconds: 0 });
-    else if (state.mode === 'timer') setState({ mode: 'timer', running: false, seconds: minInput * 60, timerMinutes: minInput });
-    else setState(pomodoroState('work', workInput, breakInput));
+    if (state.mode === 'stopwatch') replaceState(() => ({ mode: 'stopwatch', running: false, seconds: 0 }));
+    else if (state.mode === 'timer') replaceState(() => ({ mode: 'timer', running: false, seconds: minInput * 60, timerMinutes: minInput }));
+    else replaceState(() => pomodoroState('work', workInput, breakInput));
   }
 
   function applyTimerSet() {
-    if (state.mode === 'timer') setState({ mode: 'timer', running: false, seconds: minInput * 60, timerMinutes: minInput });
+    if (state.mode === 'timer') replaceState(() => ({ mode: 'timer', running: false, seconds: minInput * 60, timerMinutes: minInput }));
   }
 
   // Restarts the phase you're currently in at its new length.
   function applyPomodoroSet() {
     if (state.mode !== 'pomodoro') return;
-    setState(s => pomodoroState(s.pomodoroPhase ?? 'work', workInput, breakInput));
+    replaceState(s => pomodoroState(s.pomodoroPhase ?? 'work', workInput, breakInput));
   }
 
   return (

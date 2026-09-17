@@ -312,8 +312,9 @@ const ConnectTab: React.FC<{ settings: Settings }> = ({ settings }) => {
           Allow AI agents on this computer
         </label>
         <span className="spacer" />
-        <span className="agent-sub">Port</span>
+        <label className="agent-sub" htmlFor="agent-port">Port</label>
         <input
+          id="agent-port"
           type="number"
           className="agent-port"
           min={1024}

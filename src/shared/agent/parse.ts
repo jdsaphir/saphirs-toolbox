@@ -31,6 +31,7 @@ export interface ParseResult {
 
 const COMMAND_START = /^([a-z][a-z0-9_]*)(?:\s+([\[{].*)|\s*)$/;
 const NOT_COMMANDS = new Set(['true', 'false', 'null']);
+const isComment = (line: string) => /^\s*(#|\/\/)/.test(line);
 
 function finish(tool: string, rawArgs: unknown, line: number, out: ParseResult) {
   const def = getTool(tool);
@@ -77,7 +78,9 @@ export function parseCommandText(input: string): ParseResult {
   // Drop code fences but keep line numbers stable.
   const cleaned = lines.map(l => (/^\s*(```|~~~)/.test(l) ? '' : l));
 
-  const body = cleaned.join('\n').trim();
+  // Comment lines can't occur inside JSON (strings can't span lines), so they
+  // are dropped before deciding which form this is.
+  const body = cleaned.filter(l => !isComment(l)).join('\n').trim();
   if (!body) return out;
   if (body.startsWith('[') || body.startsWith('{')) {
     parseJsonForm(body, out);
@@ -103,7 +106,7 @@ export function parseCommandText(input: string): ParseResult {
   cleaned.forEach((raw, i) => {
     const lineNo = i + 1;
     const trimmed = raw.trim();
-    if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('//')) return;
+    if (!trimmed || isComment(trimmed)) return;
     const stripped = trimmed.replace(/^(?:[$>]\s+|\/(?=[a-z]))/, '');
     const m = COMMAND_START.exec(stripped);
     if (m && !NOT_COMMANDS.has(m[1])) {

@@ -11,6 +11,16 @@ export function clampMinutes(value: number): number {
   return Math.min(n, MAX_MINUTES);
 }
 
+// The lengths set for each mode. Every new state carries them over, so a mode
+// you switch back to (or a clear) doesn't reset them to the defaults.
+export function keepLengths(s: TimerState): Pick<TimerState, 'timerMinutes' | 'pomodoroWorkMin' | 'pomodoroBreakMin'> {
+  return {
+    ...(s.timerMinutes !== undefined ? { timerMinutes: s.timerMinutes } : {}),
+    ...(s.pomodoroWorkMin !== undefined ? { pomodoroWorkMin: s.pomodoroWorkMin } : {}),
+    ...(s.pomodoroBreakMin !== undefined ? { pomodoroBreakMin: s.pomodoroBreakMin } : {}),
+  };
+}
+
 export const timerMinutes = (s: TimerState) => s.timerMinutes ?? DEFAULT_TIMER_MIN;
 export const workMinutes = (s: TimerState) => s.pomodoroWorkMin ?? DEFAULT_POMODORO_WORK_MIN;
 export const breakMinutes = (s: TimerState) => s.pomodoroBreakMin ?? DEFAULT_POMODORO_BREAK_MIN;
@@ -32,14 +42,15 @@ export interface TimerAction {
 // The state a mode starts in. Lengths not given in the action fall back to
 // the ones already in force, then to the defaults.
 function initialState(s: TimerState, a: TimerAction, mode: TimerState['mode']): TimerState {
-  if (mode === 'stopwatch') return { mode, running: false, seconds: 0 };
+  const kept = keepLengths(s);
+  if (mode === 'stopwatch') return { ...kept, mode, running: false, seconds: 0 };
   if (mode === 'timer') {
     const min = clampMinutes(a.minutes ?? timerMinutes(s));
-    return { mode, running: false, seconds: min * 60, timerMinutes: min };
+    return { ...kept, mode, running: false, seconds: min * 60, timerMinutes: min };
   }
   const work = clampMinutes(a.workMinutes ?? workMinutes(s));
   const brk = clampMinutes(a.breakMinutes ?? breakMinutes(s));
-  return { mode, running: false, seconds: work * 60, pomodoroPhase: 'work', pomodoroWorkMin: work, pomodoroBreakMin: brk };
+  return { ...kept, mode, running: false, seconds: work * 60, pomodoroPhase: 'work', pomodoroWorkMin: work, pomodoroBreakMin: brk };
 }
 
 // Pure transition; throws an Error with a user-facing message when the action
@@ -56,7 +67,7 @@ export function applyTimerAction(s: TimerState, a: TimerAction): TimerState {
       if (s.mode === 'timer' && s.seconds <= 0) throw new Error('The timer has finished. Use "start" to run it again.');
       return { ...s, running: true };
     case 'clear':
-      return { mode: 'stopwatch', running: false, seconds: 0 };
+      return { ...keepLengths(s), mode: 'stopwatch', running: false, seconds: 0 };
     default:
       throw new Error(`Unknown timer action "${(a as TimerAction).action}".`);
   }
