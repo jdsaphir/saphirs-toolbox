@@ -7,16 +7,19 @@ import { Calculator } from './Calculator';
 import { Calendar } from './Calendar';
 import { Timer, useTimerTicker } from './Timer';
 import { SettingsTool } from './SettingsTool';
+import { AgentConsole } from './AgentConsole';
 import { DraggableWindow } from './DraggableWindow';
-import { formatSheetTitle, parseIsoDate } from '../shared/date-format';
+import { formatSheetTitle, parseIsoDate } from '../../../shared/date-format';
+import { applyTimerAction, type TimerAction } from '../../../shared/timer-actions';
 import type { SheetSummary } from './SheetsDropdown';
 
-type ToolId = 'calculator' | 'timer' | 'calendar' | 'settings' | null;
+type ToolId = 'calculator' | 'timer' | 'calendar' | 'agent' | 'settings' | null;
 
 const TOOLBAR_TOOLS: Array<{ id: NonNullable<ToolId>; label: string; icon: string }> = [
   { id: 'calculator', label: 'Calculator', icon: '🧮' },
   { id: 'timer', label: 'Timer', icon: '⏱' },
   { id: 'calendar', label: 'Calendar', icon: '📅' },
+  { id: 'agent', label: 'Agent Console', icon: '🤖' },
   { id: 'settings', label: 'Settings', icon: '⚙' },
 ];
 
@@ -63,12 +66,23 @@ export const OverlayApp: React.FC = () => {
   // Run the timer tick regardless of overlay visibility
   useTimerTicker(timerState, setTimerState);
 
-  // Persist sheet edits debounced
+  // Latest values for handlers registered once (IPC listeners).
+  const sheetRef = useRef<Sheet | null>(null);
+  sheetRef.current = sheet;
+  const timerStateRef = useRef(timerState);
+  timerStateRef.current = timerState;
+
+  // Persist sheet edits debounced. The pending sheet is kept in a ref so a
+  // flush always saves the latest edit, whichever render created the caller.
   const persistTimerRef = useRef<number | null>(null);
+  const pendingSheetRef = useRef<Sheet | null>(null);
   const persistSheet = useCallback((s: Sheet) => {
     setSheet(s);
+    pendingSheetRef.current = s;
     if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
     persistTimerRef.current = window.setTimeout(() => {
+      persistTimerRef.current = null;
+      pendingSheetRef.current = null;
       api.updateSheet(s).then(saved => {
         // Update sheet list summary (title/date may have changed)
         setSheets(list => list.map(it => it.id === saved.id
@@ -78,23 +92,90 @@ export const OverlayApp: React.FC = () => {
     }, 250);
   }, []);
 
-  function flushPersist() {
-    if (persistTimerRef.current && sheet) {
-      window.clearTimeout(persistTimerRef.current);
-      persistTimerRef.current = null;
-      api.updateSheet(sheet);
-    }
+  // Drops a pending sheet save; returns the sheet it would have saved.
+  function takePendingSheet(): Sheet | null {
+    if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
+    const pending = pendingSheetRef.current;
+    persistTimerRef.current = null;
+    pendingSheetRef.current = null;
+    return pending;
+  }
+
+  function flushPersist(): Promise<unknown> {
+    const pending = takePendingSheet();
+    return pending ? api.updateSheet(pending) : Promise.resolve();
   }
 
   // Persist permanent scratchpad edits debounced (independent of the sheet)
   const permanentTimerRef = useRef<number | null>(null);
+  const pendingNotesRef = useRef<string | null>(null);
   const persistPermanentNotes = useCallback((v: string) => {
     setPermanentNotes(v);
+    pendingNotesRef.current = v;
     if (permanentTimerRef.current) window.clearTimeout(permanentTimerRef.current);
     permanentTimerRef.current = window.setTimeout(() => {
       permanentTimerRef.current = null;
+      pendingNotesRef.current = null;
       api.setPermanentScratchpad(v);
     }, 250);
+  }, []);
+
+  function takePendingNotes(): string | null {
+    if (permanentTimerRef.current) window.clearTimeout(permanentTimerRef.current);
+    const pending = pendingNotesRef.current;
+    permanentTimerRef.current = null;
+    pendingNotesRef.current = null;
+    return pending;
+  }
+
+  // Agent commands: main asks us to save pending edits before a command runs
+  // and to drive the timer; afterwards it says what changed so we reload.
+  useEffect(() => {
+    const offRequest = api.onAgentRendererRequest(async (kind, payload) => {
+      if (kind === 'flush') {
+        const notes = takePendingNotes();
+        await Promise.all([flushPersist(), notes !== null ? api.setPermanentScratchpad(notes) : null]);
+        return true;
+      }
+      if (!payload) return timerStateRef.current;
+      const next = applyTimerAction(timerStateRef.current, payload as TimerAction);
+      timerStateRef.current = next;
+      setTimerState(next);
+      return next;
+    });
+
+    const offData = api.onDataChanged(change => {
+      const current = sheetRef.current;
+      if (current && change.deletedSheetIds.includes(current.id)) {
+        takePendingSheet();
+        api.getSheet(null).then(s => {
+          if (s) setSheet(s);
+          api.listSheets().then(setSheets);
+        });
+      } else {
+        if (current && change.sheetIds.includes(current.id)) {
+          // Pending edits were saved before the command ran; anything typed
+          // since then loses to the agent's change rather than overwriting it.
+          takePendingSheet();
+          api.getSheet(current.id).then(s => {
+            if (s && sheetRef.current?.id === s.id) setSheet(s);
+          });
+        }
+        api.listSheets().then(setSheets);
+      }
+      if (change.scratchpad) {
+        takePendingNotes();
+        api.getPermanentScratchpad().then(setPermanentNotes);
+      }
+    });
+
+    const offShow = api.onAgentShowSheet(id => {
+      flushPersist();
+      api.getSheet(id).then(s => { if (s) setSheet(s); });
+      api.listSheets().then(setSheets);
+    });
+
+    return () => { offRequest(); offData(); offShow(); };
   }, []);
 
   async function selectSheet(id: number) {
@@ -314,6 +395,7 @@ export const OverlayApp: React.FC = () => {
               onClose={() => setActiveTool(null)}
             />
           )}
+          {activeTool === 'agent' && <AgentConsole settings={settings} onClose={() => setActiveTool(null)} />}
           {activeTool === 'settings' && <SettingsTool settings={settings} onClose={() => setActiveTool(null)} />}
         </DraggableWindow>
       )}

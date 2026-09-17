@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../shared/api';
-import { parseDateInput, prettyDate } from '../shared/date-format';
+import { parseDateInput, prettyDate } from '../../../shared/date-format';
 import type { CheckboxInteractionMode, Sheet, TodoItem } from '../../../shared/types';
 import { Checkbox, StatusPalette } from './Checkbox';
 import { SheetsDropdown, SheetSummary } from './SheetsDropdown';

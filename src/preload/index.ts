@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC } from '../shared/ipc';
-import type { Settings, Sheet, TimerState } from '../shared/types';
+import type { AgentActivity, AgentServerStatus, DataChange, Settings, Sheet, TimerState } from '../shared/types';
 
 const api = {
   // Toolbox
@@ -50,6 +50,48 @@ const api = {
     return () => ipcRenderer.removeListener(IPC.TimerTick, listener);
   },
 
+  // Agent access
+  runAgentTool: (tool: string, args: unknown) =>
+    ipcRenderer.invoke(IPC.AgentRunTool, { tool, args }) as Promise<{ ok: true; result: unknown } | { ok: false; error: string }>,
+  getAgentStatus: () => ipcRenderer.invoke(IPC.AgentStatus) as Promise<AgentServerStatus>,
+  regenerateAgentToken: () => ipcRenderer.invoke(IPC.AgentRegenerateToken) as Promise<AgentServerStatus>,
+  onAgentStatusChanged: (cb: (s: AgentServerStatus) => void) => {
+    const listener = (_e: unknown, s: AgentServerStatus) => cb(s);
+    ipcRenderer.on(IPC.AgentStatusChanged, listener);
+    return () => ipcRenderer.removeListener(IPC.AgentStatusChanged, listener);
+  },
+  getAgentActivity: () => ipcRenderer.invoke(IPC.AgentActivityList) as Promise<AgentActivity[]>,
+  onAgentActivity: (cb: (entry: AgentActivity) => void) => {
+    const listener = (_e: unknown, entry: AgentActivity) => cb(entry);
+    ipcRenderer.on(IPC.AgentActivity, listener);
+    return () => ipcRenderer.removeListener(IPC.AgentActivity, listener);
+  },
+  // Main asks the overlay for renderer-side work (flush edits, drive the
+  // timer); the handler's return value or thrown message is sent back.
+  onAgentRendererRequest: (handler: (kind: 'flush' | 'timer', payload: any) => Promise<unknown> | unknown) => {
+    const listener = async (_e: unknown, req: { id: number; kind: 'flush' | 'timer'; payload: unknown }) => {
+      try {
+        const result = await handler(req.kind, req.payload);
+        ipcRenderer.send(IPC.AgentRendererReply, { id: req.id, result });
+      } catch (err) {
+        ipcRenderer.send(IPC.AgentRendererReply, { id: req.id, error: (err as Error)?.message ?? String(err) });
+      }
+    };
+    ipcRenderer.on(IPC.AgentRendererRequest, listener);
+    return () => ipcRenderer.removeListener(IPC.AgentRendererRequest, listener);
+  },
+  onAgentShowSheet: (cb: (sheetId: number) => void) => {
+    const listener = (_e: unknown, id: number) => cb(id);
+    ipcRenderer.on(IPC.AgentShowSheet, listener);
+    return () => ipcRenderer.removeListener(IPC.AgentShowSheet, listener);
+  },
+  onDataChanged: (cb: (change: DataChange) => void) => {
+    const listener = (_e: unknown, change: DataChange) => cb(change);
+    ipcRenderer.on(IPC.DataChanged, listener);
+    return () => ipcRenderer.removeListener(IPC.DataChanged, listener);
+  },
+  copyText: (text: string) => ipcRenderer.invoke(IPC.ClipboardWrite, text) as Promise<boolean>,
+
   // App control
   quitApp: () => ipcRenderer.invoke(IPC.AppQuit) as Promise<boolean>,
   onOpenSettingsTab: (cb: () => void) => {
@@ -57,9 +99,9 @@ const api = {
     ipcRenderer.on(IPC.OpenSettingsTab, listener);
     return () => ipcRenderer.removeListener(IPC.OpenSettingsTab, listener);
   },
-  requestOpenTool: (tool: 'calculator' | 'timer' | 'calendar' | 'settings') => ipcRenderer.send(IPC.RequestOpenTool, tool),
-  onOpenToolTab: (cb: (tool: 'calculator' | 'timer' | 'calendar' | 'settings') => void) => {
-    const listener = (_e: unknown, tool: 'calculator' | 'timer' | 'calendar' | 'settings') => cb(tool);
+  requestOpenTool: (tool: 'calculator' | 'timer' | 'calendar' | 'agent' | 'settings') => ipcRenderer.send(IPC.RequestOpenTool, tool),
+  onOpenToolTab: (cb: (tool: 'calculator' | 'timer' | 'calendar' | 'agent' | 'settings') => void) => {
+    const listener = (_e: unknown, tool: 'calculator' | 'timer' | 'calendar' | 'agent' | 'settings') => cb(tool);
     ipcRenderer.on(IPC.OpenToolTab, listener);
     return () => ipcRenderer.removeListener(IPC.OpenToolTab, listener);
   },

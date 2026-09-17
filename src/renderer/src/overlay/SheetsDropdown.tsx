@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { prettyDate } from '../shared/date-format';
+import { prettyDate } from '../../../shared/date-format';
 
 export interface SheetSummary {
   id: number;
