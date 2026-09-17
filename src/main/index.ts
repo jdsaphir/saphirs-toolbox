@@ -1,9 +1,9 @@
 import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, screen } from 'electron';
-import { autoUpdater } from 'electron-updater';
 import fs from 'fs';
 import path from 'path';
 import { IPC } from '../shared/ipc';
 import { createTray } from './tray';
+import { closeLeftoverBridges, initAutoUpdater } from './updater';
 import {
   createSheet,
   deleteSheet,
@@ -125,14 +125,7 @@ app.whenReady().then(() => {
   // portable build, electron-updater can't replace a running .exe so this
   // call is effectively a no-op (it logs an error and moves on). The dev
   // build is unpackaged and skipped entirely.
-  if (app.isPackaged) {
-    autoUpdater.autoDownload = true;
-    autoUpdater.autoInstallOnAppQuit = true;
-    autoUpdater.on('error', err => console.error('[autoUpdater]', err));
-    autoUpdater.checkForUpdatesAndNotify().catch(err => {
-      console.error('[autoUpdater] check failed:', err);
-    });
-  }
+  if (app.isPackaged) initAutoUpdater();
 
   // ── Toolbox ────────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.ToolboxToggle, () => {
@@ -304,4 +297,6 @@ app.on('window-all-closed', () => {
 app.on('will-quit', () => {
   if (registeredShortcut) globalShortcut.unregister(registeredShortcut);
   shutdownAgentServer();
+  // Last moment before electron-updater hands over to the installer.
+  closeLeftoverBridges();
 });

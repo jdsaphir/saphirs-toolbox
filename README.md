@@ -118,6 +118,8 @@ git push && git push --tags
 
 Installed (NSIS) builds check for updates on launch via `electron-updater`. Portable builds don't auto-update — users grab a new file from the Releases page.
 
+An MCP bridge is the app's own executable run as plain Node, started from the install folder by whichever AI client connected to it. The client keeps it alive after the app quits, and Windows won't let the installer delete a running `.exe`, so both ends close those leftovers before the old version is removed: `build/installer.nsh` in the installer, and `closeLeftoverBridges()` in `src/main/updater.ts` on the way out. Clients start a fresh bridge on their next call.
+
 ## Stack
 
 - Electron 33 (main + preload + two renderer windows: dolphin and overlay)

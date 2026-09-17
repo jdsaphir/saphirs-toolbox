@@ -87,7 +87,8 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Saphir's Toolbox",
-      "artifactName": "SaphirsToolbox-${version}-setup.exe"
+      "artifactName": "SaphirsToolbox-${version}-setup.exe",
+      "include": "build/installer.nsh"
     }
   }
 }
