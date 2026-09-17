@@ -16,6 +16,10 @@ A floating utility companion for Windows. A small dolphin button hovers over eve
 - **Calculator** — basic arithmetic with keyboard support.
 - **Calendar** — month grid with ISO week numbers; click a date to open its task list (or create one on the spot). Dates that already have a list are marked with a dot, and a "Today" button jumps back to the current month. Week start (Sunday/Monday) is configurable in settings.
 - **Timer / Stopwatch / Pomodoro** — runs in the background; remaining time appears as a pill above the dolphin icon. Timer length, and the Pomodoro work and break lengths, are set per session in the widget (Pomodoro defaults to 25 / 5).
+- **AI agents** — AI tools can read and update your to-do lists, Day Notes, Scratchpad and timer (see [AI agents](#ai-agents)):
+  - **On this computer** (Claude Code, Claude Desktop & Cowork, Codex, or anything that speaks MCP or HTTP): connect them once from the Agent Console, and their changes show up in the toolbox right away.
+  - **On another computer**: the **Agent Console** (🤖) runs commands an assistant writes for you. Copy the AI instructions into your chat, then paste the commands it produces; the console previews what each one does before you run it.
+  - An **Activity** log lists everything agents did.
 - **Settings** — rebind the global shortcut by pressing keys; switch checkbox interaction mode (popup palette vs. left-click cycle); pick dolphin icon style and customize its colors (body/eye, plus the colors shown while the toolbox is open); set the app accent color; control toolbar expansion direction; choose whether the calendar week starts on Sunday or Monday.
 
 ## Checkbox states
@@ -38,6 +42,45 @@ Corner notches combine with any status:
 - **Top-right**: Personal
 - **Bottom-right**: Follow up
 - **Bottom-left**: Canceled
+
+## AI agents
+
+Open the toolbox and click 🤖 (**Agent Console**).
+
+### Agents on this computer
+
+While the app runs, it serves a local API on `127.0.0.1:47821` (this computer only). The **Connect** tab has ready-to-paste setups with your paths and token filled in:
+
+- **Claude Desktop & Cowork**: a `claude_desktop_config.json` entry. It runs a small MCP bridge (`dist-main/bridge/mcp-stdio.js`) with the app's own executable, so Node isn't needed.
+- **Claude Code**: a `claude mcp add` command (MCP over HTTP).
+- **Codex**: a `~/.codex/config.toml` entry (same bridge as Claude Desktop).
+- **Anything else**: `POST /mcp` (MCP, Streamable HTTP) or `POST /api/<command>` with the arguments as a JSON body; `GET /api` lists the commands. Requests need `Authorization: Bearer <token>`. While the app runs, the URL and token are also in `agent-api.json` in the app's data folder.
+
+Requests from web pages are refused, and you can turn access off or change the port in the Connect tab. The bridge setups use the installed app's path, so they don't work with the portable build (it runs from a temporary folder); use the installer, or the HTTP setup.
+
+### Agents on another computer
+
+1. In the **Run** tab, click **Copy AI instructions** and paste them into your chat (or a project's instructions).
+2. Ask for what you want. The assistant answers with commands, one per line:
+   ```
+   add_todos {"date":"tomorrow","items":[{"text":"Call the dentist"},{"text":"Send the invoice","flags":["important"]}]}
+   update_todo {"match":"quarterly report","status":"done"}
+   ```
+3. Paste them into the console, check the preview, and click **Run**. Commands stop at the first error. For commands that read (`get_day`, `search`, …), **Copy results** gives you something to paste back to the assistant.
+
+### Commands
+
+| Command | What it does |
+| --- | --- |
+| `get_day`, `list_days`, `search` | Read a day's to-dos and notes, list days with counts, search to-dos and notes |
+| `add_todos`, `update_todo`, `remove_todo`, `move_todo`, `set_todos` | Edit a day's to-do list (rows are picked by number or by text) |
+| `carry_over` | Copy one day's unfinished to-dos to another day and mark the originals deferred |
+| `delete_day` | Delete a day's list and notes |
+| `write_day_notes`, `get_scratchpad`, `write_scratchpad` | Add to (at the end or the start) or replace a day's notes; read or write the Scratchpad |
+| `control_timer`, `get_timer` | Start, pause, resume, reset or clear the stopwatch, timer or Pomodoro |
+| `show_day` | Open the toolbox on a given day |
+
+Days are `YYYY-MM-DD`, `today`, `tomorrow` or `yesterday`.
 
 ## Install
 

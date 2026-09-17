@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import type { WeekStart } from '../../../shared/types';
 import type { SheetSummary } from './SheetsDropdown';
-import { formatSheetTitle, isoWeek, isSameDay, parseIsoDate, toIsoDate } from '../shared/date-format';
+import { formatSheetTitle, isoWeek, isSameDay, parseIsoDate, toIsoDate } from '../../../shared/date-format';
 
 interface Props {
   weekStart: WeekStart;

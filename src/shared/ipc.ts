@@ -42,4 +42,18 @@ export const IPC = {
   OpenSettingsTab: 'app:open-settings', // main -> overlay renderer
   OpenToolTab: 'app:open-tool',         // main -> overlay renderer; payload: 'calculator' | 'timer' | 'settings'
   RequestOpenTool: 'app:request-tool',  // renderer -> main; payload: tool id
+  ClipboardWrite: 'app:clipboard-write',
+
+  // Agent access
+  AgentRunTool: 'agent:run-tool',             // console -> main: { tool, args }
+  AgentStatus: 'agent:status',
+  AgentStatusChanged: 'agent:status-changed', // main -> renderers
+  AgentRegenerateToken: 'agent:regenerate-token',
+  AgentActivityList: 'agent:activity-list',
+  AgentActivity: 'agent:activity',            // main -> renderers: one new entry
+  AgentRendererRequest: 'agent:renderer-request', // main -> overlay: { id, kind, payload }
+  AgentRendererReply: 'agent:renderer-reply',     // overlay -> main: { id, result?, error? }
+  AgentRendererReady: 'agent:renderer-ready',     // overlay -> main: its agent listeners are registered
+  AgentShowSheet: 'agent:show-sheet',         // main -> overlay: sheet id to display
+  DataChanged: 'data:changed',                // main -> overlay: DataChange
 } as const;

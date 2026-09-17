@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, globalShortcut, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, screen } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import fs from 'fs';
 import path from 'path';
@@ -29,7 +29,17 @@ import {
   isOverlayVisible,
   showOverlay,
 } from './windows';
-import { Settings, Sheet } from '../shared/types';
+import { DataChange, Settings, Sheet, TimerState } from '../shared/types';
+import type { TimerAction } from '../shared/timer-actions';
+import { getAgentActivity, initAgentExecutor, runAgentTool } from './agent/executor';
+import { initRendererRequests, requestRenderer, whenOverlayReady } from './agent/renderer-requests';
+import {
+  configureAgentServer,
+  generateAgentToken,
+  getAgentServerStatus,
+  onAgentStatusChanged,
+  shutdownAgentServer,
+} from './agent/server';
 
 let registeredShortcut: string | null = null;
 
@@ -94,6 +104,7 @@ if (!gotSingleInstanceLock) {
 
 app.whenReady().then(() => {
   initDb();
+  if (!getSettings().agentApiToken) setSettings({ agentApiToken: generateAgentToken() });
   const settings = getSettings();
 
   createDolphinWindow();
@@ -156,6 +167,9 @@ app.whenReady().then(() => {
     const before = getSettings();
     const after = setSettings(partial);
     if (after.shortcut !== before.shortcut) registerShortcut(after.shortcut);
+    if (after.agentApiEnabled !== before.agentApiEnabled || after.agentApiPort !== before.agentApiPort) {
+      configureAgentServer(after);
+    }
     broadcast(IPC.SettingsChanged, after);
     return after;
   });
@@ -228,6 +242,46 @@ app.whenReady().then(() => {
     return true;
   });
 
+  ipcMain.handle(IPC.ClipboardWrite, (_e, text: string) => {
+    clipboard.writeText(text);
+    return true;
+  });
+
+  // ── Agent access ───────────────────────────────────────────────────────────
+  initRendererRequests();
+  initAgentExecutor({
+    // Best effort: if the overlay can't answer, run the command anyway.
+    flushRenderer: () => requestRenderer<void>('flush', null, 1500).catch(() => undefined),
+    notifyChanged: (change: DataChange) => getOverlayWindow()?.webContents.send(IPC.DataChanged, change),
+    timer: (action: TimerAction | null) => requestRenderer<TimerState>('timer', action, 3000),
+    showSheet: async (sheetId: number) => {
+      await whenOverlayReady(5000);
+      openOverlay();
+      getOverlayWindow()?.webContents.send(IPC.AgentShowSheet, sheetId);
+    },
+    onActivity: entry => broadcast(IPC.AgentActivity, entry),
+  });
+  onAgentStatusChanged(status => broadcast(IPC.AgentStatusChanged, status));
+  configureAgentServer(settings);
+
+  // Commands pasted into the Agent Console. Errors come back as values: a
+  // rejected invoke would wrap the message in Electron's own text.
+  ipcMain.handle(IPC.AgentRunTool, async (_e, call: { tool: string; args: unknown }) => {
+    try {
+      return { ok: true, result: await runAgentTool(call.tool, call.args, 'console') };
+    } catch (err) {
+      return { ok: false, error: (err as Error).message };
+    }
+  });
+  ipcMain.handle(IPC.AgentStatus, () => getAgentServerStatus());
+  ipcMain.handle(IPC.AgentRegenerateToken, async () => {
+    const after = setSettings({ agentApiToken: generateAgentToken() });
+    broadcast(IPC.SettingsChanged, after);
+    await configureAgentServer(after);
+    return getAgentServerStatus();
+  });
+  ipcMain.handle(IPC.AgentActivityList, () => getAgentActivity());
+
   // Renderer (dolphin) asks the toolbox to open and jump to a specific tool.
   ipcMain.on(IPC.RequestOpenTool, (_e, tool: string) => {
     openOverlay();
@@ -249,4 +303,5 @@ app.on('window-all-closed', () => {
 
 app.on('will-quit', () => {
   if (registeredShortcut) globalShortcut.unregister(registeredShortcut);
+  shutdownAgentServer();
 });

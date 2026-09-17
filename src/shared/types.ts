@@ -59,6 +59,11 @@ export interface Settings {
   dolphinEyeColor: string;
   dolphinEyeColorOpen: string;
   accentColor: string;                      // app accent (drives --accent at runtime)
+  // Local agent API (MCP + HTTP on 127.0.0.1). The token is generated on first
+  // start and required on every request.
+  agentApiEnabled: boolean;
+  agentApiPort: number;
+  agentApiToken: string;
 }
 
 export interface TimerState {
@@ -73,6 +78,48 @@ export interface TimerState {
   // headless ticker rolls phases over while the Timer widget is closed.
   pomodoroWorkMin?: number;
   pomodoroBreakMin?: number;
+  // timer: the length it was set to, in minutes, so a reset (from the widget
+  // or an agent) knows what to go back to. Like the pomodoro lengths, it's kept
+  // while another mode runs.
+  timerMinutes?: number;
+}
+
+// ── Agent access ─────────────────────────────────────────────────────────────
+
+// Where an agent command came from: pasted into the Agent Console, an MCP
+// client (directly over HTTP or through the stdio bridge), or the plain HTTP API.
+export type AgentSource = 'console' | 'mcp' | 'http';
+
+export interface AgentActivity {
+  id: number;
+  at: string;          // ISO timestamp
+  source: AgentSource;
+  tool: string;
+  summary: string;
+  ok: boolean;
+  error?: string;
+}
+
+// main -> overlay after an agent changed stored data, so open widgets reload.
+export interface DataChange {
+  sheetIds: number[];         // sheets whose to-dos or notes changed
+  deletedSheetIds: number[];
+  scratchpad: boolean;        // the permanent scratchpad changed
+}
+
+export interface AgentServerStatus {
+  enabled: boolean;
+  listening: boolean;
+  port: number;
+  error: string | null;
+  url: string;                // http://127.0.0.1:<port>
+  mcpUrl: string;             // <url>/mcp
+  token: string;
+  discoveryFile: string;      // JSON file local agents can read to find url + token
+  // How MCP clients that only speak stdio (Claude Desktop, Cowork, Codex)
+  // launch the bridge: the app's own executable running as Node.
+  bridge: { command: string; args: string[]; env: Record<string, string> };
+  portable: boolean;          // portable builds run from a temp dir that changes every launch
 }
 
 export const EMPTY_TODO: TodoItem = {

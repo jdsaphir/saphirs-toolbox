@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../shared/api';
 import { DolphinIcon } from '../shared/DolphinIcon';
-import { formatTimer } from '../shared/timer-format';
+import { formatTimer } from '../../../shared/timer-format';
 import type { Settings, TimerState } from '../../../shared/types';
 
 const CLICK_THRESHOLD_PX = 4;
