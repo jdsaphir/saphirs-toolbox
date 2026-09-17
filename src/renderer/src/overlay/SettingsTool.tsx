@@ -33,8 +33,10 @@ function buildAccelerator(mods: Set<string>, key: string): string {
 export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
   const [local, setLocal] = useState<Settings>(settings);
   const [recording, setRecording] = useState(false);
+  const [version, setVersion] = useState('');
 
   useEffect(() => setLocal(settings), [settings]);
+  useEffect(() => { api.getAppVersion().then(setVersion); }, []);
 
   function save(patch: Partial<Settings>) {
     setLocal(prev => ({ ...prev, ...patch }));
@@ -137,13 +139,16 @@ export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
         <ColorField label="Accent color" value={local.accentColor} onChange={v => save({ accentColor: v })} />
       </div>
 
-      <div className="field" style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+      <div className="settings-footer">
         <button
           onClick={() => { if (confirm("Quit Saphir's Toolbox?")) api.quitApp(); }}
           style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
         >
           Quit Saphir's Toolbox
         </button>
+        {/* The installed version, so it can be checked without leaving the app
+            — the updater applies new ones silently. */}
+        {version && <span className="app-version">v{version}</span>}
       </div>
     </div>
   );

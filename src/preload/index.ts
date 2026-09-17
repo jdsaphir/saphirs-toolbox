@@ -95,6 +95,7 @@ const api = {
 
   // App control
   quitApp: () => ipcRenderer.invoke(IPC.AppQuit) as Promise<boolean>,
+  getAppVersion: () => ipcRenderer.invoke(IPC.AppVersion) as Promise<string>,
   onOpenSettingsTab: (cb: () => void) => {
     const listener = () => cb();
     ipcRenderer.on(IPC.OpenSettingsTab, listener);

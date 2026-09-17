@@ -234,6 +234,7 @@ app.whenReady().then(() => {
     quitApp();
     return true;
   });
+  ipcMain.handle(IPC.AppVersion, () => app.getVersion());
 
   ipcMain.handle(IPC.ClipboardWrite, (_e, text: string) => {
     clipboard.writeText(text);

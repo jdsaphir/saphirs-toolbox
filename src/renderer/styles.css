@@ -665,6 +665,17 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .settings-widget { width: 340px; max-height: 70vh; overflow-y: auto; }
 .settings-widget .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
 .settings-widget .field label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+/* Quit on the left, the installed version on the right. */
+.settings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.settings-footer .app-version { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .settings-widget .section-label {
   font-size: 11px;
   color: var(--text-dim);

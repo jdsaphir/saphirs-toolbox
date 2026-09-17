@@ -20,7 +20,7 @@ A floating utility companion for Windows. A small dolphin button hovers over eve
   - **On this computer** (Claude Code, Claude Desktop & Cowork, Codex, or anything that speaks MCP or HTTP): connect them once from the Agent Console, and their changes show up in the toolbox right away.
   - **On another computer**: the **Agent Console** (🤖) runs commands an assistant writes for you. Copy the AI instructions into your chat, then paste the commands it produces; the console previews what each one does before you run it.
   - An **Activity** log lists everything agents did.
-- **Settings** — rebind the global shortcut by pressing keys; switch checkbox interaction mode (popup palette vs. left-click cycle); pick dolphin icon style and customize its colors (body/eye, plus the colors shown while the toolbox is open); set the app accent color; control toolbar expansion direction; choose whether the calendar week starts on Sunday or Monday.
+- **Settings** — rebind the global shortcut by pressing keys; switch checkbox interaction mode (popup palette vs. left-click cycle); pick dolphin icon style and customize its colors (body/eye, plus the colors shown while the toolbox is open); set the app accent color; control toolbar expansion direction; choose whether the calendar week starts on Sunday or Monday. The installed version is shown beside the Quit button.
 
 ## Checkbox states
 
@@ -89,7 +89,7 @@ Pre-built Windows binaries are attached to each [GitHub Release](https://github.
 - **Setup (`SaphirsToolbox-<version>-setup.exe`)** — installs the app, registers it in Add/Remove Programs, and auto-updates in place when new versions are released.
 - **Portable (`SaphirsToolbox-<version>-portable.exe`)** — single self-contained executable. Drop it anywhere and double-click. No installation, no Add/Remove Programs entry. Update by downloading a new release.
 
-The app lives in the system tray. Right-click the tray icon for Open / Hide / Settings / Quit, or click the dolphin to toggle the toolbox. There is also a Quit button at the bottom of the Settings panel.
+The app lives in the system tray. Right-click the tray icon for Open / Hide / Settings / Quit, or click the dolphin to toggle the toolbox. There is also a Quit button at the bottom of the Settings panel, with the installed version next to it.
 
 Data lives in SQLite at `%APPDATA%/saphirs-toolbox/toolbox.db`.
 
