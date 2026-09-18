@@ -80,7 +80,7 @@ export interface UpdateStatus {
   version?: string;   // the release a check found, when there is one
   percent?: number;   // download progress, while downloading
   error?: string;
-  checkedAt?: string; // ISO timestamp of the last completed check
+  checkedAt?: string; // ISO timestamp of the last check that completed without finding one
 }
 
 export interface TimerState {

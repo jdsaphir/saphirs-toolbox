@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process';
 import { app } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import type { Settings, UpdateCheckInterval, UpdateStatus } from '../shared/types';
-import { visibleStatus, type ReadyUpdate } from '../shared/update-status';
+import { visibleStatus } from '../shared/update-status';
 
 const INTERVAL_MS: Record<UpdateCheckInterval, number | null> = {
   hourly: 60 * 60 * 1000,
@@ -18,7 +18,7 @@ const INTERVAL_MS: Record<UpdateCheckInterval, number | null> = {
 
 // The downloaded update, kept apart from the passing states of a check so that
 // a later check can't erase it. See shared/update-status.ts.
-let ready: ReadyUpdate | null = null;
+let ready: string | null = null;
 let status: UpdateStatus = { state: 'idle' };
 let statusListener: ((s: UpdateStatus) => void) | null = null;
 let timer: NodeJS.Timeout | null = null;
@@ -67,8 +67,8 @@ export function initAutoUpdater(settings: Settings): void {
     percent: Math.round(p.percent),
   }));
   autoUpdater.on('update-downloaded', info => {
-    ready = { version: info.version, at: new Date().toISOString() };
-    setStatus({ state: 'ready', version: info.version, checkedAt: ready.at });
+    ready = info.version;
+    setStatus({ state: 'ready', version: info.version });
   });
   autoUpdater.on('error', err => reportCheckError(err));
 

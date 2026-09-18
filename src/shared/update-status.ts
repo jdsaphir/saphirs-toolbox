@@ -14,16 +14,14 @@
 
 import type { UpdateStatus } from './types';
 
-export interface ReadyUpdate {
-  version: string;
-  at: string; // ISO timestamp of the download
-}
-
-export function visibleStatus(ready: ReadyUpdate | null, current: UpdateStatus): UpdateStatus {
+// `ready` is the version waiting to install, or null when nothing is.
+export function visibleStatus(ready: string | null, current: UpdateStatus): UpdateStatus {
   if (!ready) return current;
   // Downloading is the one thing allowed through: it means a newer release than
   // the pending one turned up, and its progress is worth watching. It replaces
   // `ready` once it finishes.
   if (current.state === 'downloading') return current;
-  return { state: 'ready', version: ready.version, checkedAt: ready.at };
+  // No checkedAt: that field is when a check last completed, which a pending
+  // download says nothing about, and the panel doesn't show a time here anyway.
+  return { state: 'ready', version: ready };
 }
