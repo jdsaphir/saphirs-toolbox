@@ -67,25 +67,39 @@ input[type="text"], input[type="number"], input[type="date"], textarea, select {
   padding: 4px 6px;
   outline: none;
 }
-/* The spin buttons are drawn by the UA, so they only go dark via color-scheme. */
-input[type="number"] { color-scheme: dark; }
+/* The spin buttons and the dropdown list a select pops open are drawn by the
+   UA, not by the page, so they follow color-scheme rather than any CSS on the
+   control. Without it the list is a light popup carrying this theme's light
+   text — unreadable on every row but the highlighted one.
+   The rows then need opaque colors of their own, because the background above
+   is translucent: the popup paints that 25% black over its own base, which is
+   what tints the list in the first place. #1c2638 is --bg-widget-soft without
+   the transparency. */
+input[type="number"], select { color-scheme: dark; }
+select option { background-color: #1c2638; color: var(--text); }
 input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 
 /* The UA scrollbar is a wide opaque bar with arrow buttons at both ends, which
    looks pasted on over the translucent widgets; styling it swaps that for a
    thin accent-tinted thumb on a transparent track. Listed per widget rather
    than set globally so the native bar stays on anything that is not one of
-   these panes. */
+   these panes. The settings panel is the scroller itself, so it takes the
+   rules directly rather than through a descendant selector. */
 .agent-widget ::-webkit-scrollbar,
-.scratchpad-widget ::-webkit-scrollbar { width: 8px; height: 8px; }
+.scratchpad-widget ::-webkit-scrollbar,
+.settings-widget::-webkit-scrollbar { width: 8px; height: 8px; }
 .agent-widget ::-webkit-scrollbar-track,
-.scratchpad-widget ::-webkit-scrollbar-track { background: transparent; }
+.scratchpad-widget ::-webkit-scrollbar-track,
+.settings-widget::-webkit-scrollbar-track { background: transparent; }
 .agent-widget ::-webkit-scrollbar-thumb,
-.scratchpad-widget ::-webkit-scrollbar-thumb { background: rgba(120, 170, 230, 0.25); border-radius: 4px; }
+.scratchpad-widget ::-webkit-scrollbar-thumb,
+.settings-widget::-webkit-scrollbar-thumb { background: rgba(120, 170, 230, 0.25); border-radius: 4px; }
 .agent-widget ::-webkit-scrollbar-thumb:hover,
-.scratchpad-widget ::-webkit-scrollbar-thumb:hover { background: rgba(120, 170, 230, 0.4); }
+.scratchpad-widget ::-webkit-scrollbar-thumb:hover,
+.settings-widget::-webkit-scrollbar-thumb:hover { background: rgba(120, 170, 230, 0.4); }
 .agent-widget ::-webkit-scrollbar-corner,
-.scratchpad-widget ::-webkit-scrollbar-corner { background: transparent; }
+.scratchpad-widget ::-webkit-scrollbar-corner,
+.settings-widget::-webkit-scrollbar-corner { background: transparent; }
 /* Styling the scrollbar drops the UA's arrow buttons but not the grabber a
    resizable textarea paints below them; drop its paint too, keep the drag. */
 .agent-widget ::-webkit-resizer,
@@ -665,6 +679,26 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .settings-widget { width: 340px; max-height: 70vh; overflow-y: auto; }
 .settings-widget .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
 .settings-widget .field label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+/* Check now on the left, what it found on the right. The status wraps rather
+   than stretching the panel, since an error carries a whole message. */
+.update-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.update-row button { flex: 0 0 auto; }
+.update-status { flex: 1; min-width: 0; font-size: 11px; color: var(--text-dim); overflow-wrap: anywhere; }
+.update-status.ready { color: var(--success); }
+.update-status.error { color: var(--danger); }
+.settings-widget .sub { font-size: 11px; color: var(--text-dim); line-height: 1.45; }
+
+/* Quit on the left, the installed version on the right. */
+.settings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.settings-footer .app-version { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .settings-widget .section-label {
   font-size: 11px;
   color: var(--text-dim);

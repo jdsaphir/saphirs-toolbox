@@ -43,6 +43,10 @@ export interface Sheet {
 export type CheckboxInteractionMode = 'palette' | 'cycle';
 export type DolphinIconVariant = 'duotone' | 'solid';
 export type WeekStart = 'sunday' | 'monday';
+// How often the installed build looks for a new release. 'startup' keeps the
+// original behaviour (the check on launch and nothing more); 'never' turns it
+// off entirely. The hourly and daily settings also check on launch.
+export type UpdateCheckInterval = 'hourly' | 'daily' | 'startup' | 'never';
 
 export interface Settings {
   shortcut: string;                        // Electron accelerator
@@ -64,6 +68,19 @@ export interface Settings {
   agentApiEnabled: boolean;
   agentApiPort: number;
   agentApiToken: string;
+  // Auto-update (installed build only).
+  updateCheckInterval: UpdateCheckInterval;
+}
+
+// What the Settings panel shows about updating. 'unsupported' covers the
+// portable and dev builds, where electron-updater can't replace the running
+// executable.
+export interface UpdateStatus {
+  state: 'unsupported' | 'idle' | 'checking' | 'up-to-date' | 'available' | 'downloading' | 'ready' | 'error';
+  version?: string;   // the release a check found, when there is one
+  percent?: number;   // download progress, while downloading
+  error?: string;
+  checkedAt?: string; // ISO timestamp of the last check that completed without finding one
 }
 
 export interface TimerState {
