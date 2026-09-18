@@ -77,7 +77,7 @@ export interface Settings {
 // executable.
 export interface UpdateStatus {
   state: 'unsupported' | 'idle' | 'checking' | 'up-to-date' | 'available' | 'downloading' | 'ready' | 'error';
-  version?: string;   // the release found, once one is
+  version?: string;   // the release a check found, when there is one
   percent?: number;   // download progress, while downloading
   error?: string;
   checkedAt?: string; // ISO timestamp of the last completed check

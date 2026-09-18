@@ -7,6 +7,7 @@ import { execFileSync } from 'node:child_process';
 import { app } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import type { Settings, UpdateCheckInterval, UpdateStatus } from '../shared/types';
+import { visibleStatus, type ReadyUpdate } from '../shared/update-status';
 
 const INTERVAL_MS: Record<UpdateCheckInterval, number | null> = {
   hourly: 60 * 60 * 1000,
@@ -15,7 +16,9 @@ const INTERVAL_MS: Record<UpdateCheckInterval, number | null> = {
   never: null,
 };
 
-let updateReady = false;
+// The downloaded update, kept apart from the passing states of a check so that
+// a later check can't erase it. See shared/update-status.ts.
+let ready: ReadyUpdate | null = null;
 let status: UpdateStatus = { state: 'idle' };
 let statusListener: ((s: UpdateStatus) => void) | null = null;
 let timer: NodeJS.Timeout | null = null;
@@ -32,7 +35,7 @@ export function onUpdateStatusChanged(listener: (s: UpdateStatus) => void): void
 }
 
 export function getUpdateStatus(): UpdateStatus {
-  return supported() ? status : { state: 'unsupported' };
+  return supported() ? visibleStatus(ready, status) : { state: 'unsupported' };
 }
 
 function setStatus(next: UpdateStatus) {
@@ -40,13 +43,8 @@ function setStatus(next: UpdateStatus) {
   statusListener?.(getUpdateStatus());
 }
 
-// A failed check changes nothing about an update that is already downloaded:
-// it still installs on quit, and that is the more useful thing for the panel to
-// be saying. Trading it for a transient 'Check failed' would be a worse report
-// than none.
 function reportCheckError(err: unknown): void {
   console.error('[autoUpdater]', err);
-  if (status.state === 'ready') return;
   setStatus({ state: 'error', version: status.version, error: String((err as Error)?.message ?? err) });
 }
 
@@ -57,13 +55,7 @@ export function initAutoUpdater(settings: Settings): void {
   autoUpdater.autoInstallOnAppQuit = true;
 
   autoUpdater.on('checking-for-update', () => setStatus({ state: 'checking' }));
-  autoUpdater.on('update-available', info => {
-    // A re-check finds the pending release again. Saying 'Found v1.4.0'
-    // after already saying it installs on quit reads like a step backwards,
-    // so only move off 'ready' when the release is a different one.
-    if (status.state === 'ready' && status.version === info.version) return;
-    setStatus({ state: 'available', version: info.version });
-  });
+  autoUpdater.on('update-available', info => setStatus({ state: 'available', version: info.version }));
   autoUpdater.on('update-not-available', info => setStatus({
     state: 'up-to-date',
     version: info.version,
@@ -75,8 +67,8 @@ export function initAutoUpdater(settings: Settings): void {
     percent: Math.round(p.percent),
   }));
   autoUpdater.on('update-downloaded', info => {
-    updateReady = true;
-    setStatus({ state: 'ready', version: info.version, checkedAt: new Date().toISOString() });
+    ready = { version: info.version, at: new Date().toISOString() };
+    setStatus({ state: 'ready', version: info.version, checkedAt: ready.at });
   });
   autoUpdater.on('error', err => reportCheckError(err));
 
@@ -130,7 +122,7 @@ export async function checkForUpdates(): Promise<UpdateStatus> {
 // update landing on a version older than this one. Doing it here as well keeps
 // the window between the two as short as possible.
 export function closeLeftoverBridges(): void {
-  if (!updateReady || process.platform !== 'win32') return;
+  if (!ready || process.platform !== 'win32') return;
   // Match on this executable plus the bridge script, so only our own bridges
   // go — never another app, and never this process or its helper children.
   const exe = process.execPath.replace(/'/g, "''");
