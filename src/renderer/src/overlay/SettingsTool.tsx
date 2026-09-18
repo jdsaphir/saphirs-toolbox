@@ -188,8 +188,9 @@ export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
 
 // One short line under the button. A new version installs on quit, so 'ready'
 // says that rather than offering a restart the app can't usefully force. 'Idle'
-// only shows when checks are turned off, and still says something: the row
-// holds space for this line either way.
+// covers both the moment before the first check answers and the whole time
+// checks are turned off, and still says something: the row holds space for this
+// line either way.
 function describeUpdate(u: UpdateStatus): string {
   switch (u.state) {
     case 'checking': return 'Checking…';

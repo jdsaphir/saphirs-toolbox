@@ -40,6 +40,16 @@ function setStatus(next: UpdateStatus) {
   statusListener?.(getUpdateStatus());
 }
 
+// A failed check changes nothing about an update that is already downloaded:
+// it still installs on quit, and that is the more useful thing for the panel to
+// be saying. Trading it for a transient 'Check failed' would be a worse report
+// than none.
+function reportCheckError(err: unknown): void {
+  console.error('[autoUpdater]', err);
+  if (status.state === 'ready') return;
+  setStatus({ state: 'error', version: status.version, error: String((err as Error)?.message ?? err) });
+}
+
 export function initAutoUpdater(settings: Settings): void {
   if (!supported()) return;
 
@@ -68,10 +78,7 @@ export function initAutoUpdater(settings: Settings): void {
     updateReady = true;
     setStatus({ state: 'ready', version: info.version, checkedAt: new Date().toISOString() });
   });
-  autoUpdater.on('error', err => {
-    console.error('[autoUpdater]', err);
-    setStatus({ state: 'error', version: status.version, error: String(err?.message ?? err) });
-  });
+  autoUpdater.on('error', err => reportCheckError(err));
 
   // Every setting except 'never' still checks on launch: that is the one moment
   // an update can actually be installed, since electron-updater applies it on
@@ -102,8 +109,7 @@ export async function checkForUpdates(): Promise<UpdateStatus> {
   try {
     await autoUpdater.checkForUpdates();
   } catch (err) {
-    console.error('[autoUpdater] check failed:', err);
-    setStatus({ state: 'error', error: String((err as Error)?.message ?? err) });
+    reportCheckError(err);
   } finally {
     checking = false;
   }
