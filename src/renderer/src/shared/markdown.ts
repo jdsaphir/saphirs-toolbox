@@ -21,6 +21,18 @@ const PURIFY_CONFIG = {
   FORBID_ATTR: ['style'],
 };
 
+// Let links point at plain Windows paths (C:\notes\plan.md or C:/notes/plan.md)
+// as well as file:/// URLs. Chromium would treat "C:" as an unknown scheme, and
+// the sanitizer would strip it; as a file URL, it survives and the main process
+// opens it in the file's default app.
+marked.use({
+  walkTokens(token) {
+    if (token.type === 'link' && /^[a-z]:[\\/]/i.test(token.href)) {
+      token.href = 'file:///' + token.href.replace(/\\/g, '/');
+    }
+  },
+});
+
 // Task lists (`- [x] done`) are the only reason to keep <input>: marked renders
 // them as disabled checkboxes. Any other input (file pickers, password boxes…)
 // goes, and checkboxes stay read-only.

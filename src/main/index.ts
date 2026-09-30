@@ -1,6 +1,7 @@
 import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, screen, shell } from 'electron';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { IPC } from '../shared/ipc';
 import { createTray } from './tray';
 import {
@@ -80,14 +81,44 @@ function closeOverlayAndNotify() {
 
 // Links in the notes previews are plain <a> tags. Left alone, a click loads the
 // site inside the full-screen overlay itself (or a new bare window for Ctrl- and
-// middle-clicks). Send web and mail links to the default apps instead, and close
-// the overlay so the browser isn't hidden behind it. Anything else is ignored.
+// middle-clicks). Send web and mail links to the default apps and file links to
+// the file's default app instead, and close the overlay so what opens isn't
+// hidden behind it. Anything else is ignored.
 function openLinkExternally(url: string) {
   let protocol: string;
   try { protocol = new URL(url).protocol; } catch { return; }
-  if (protocol !== 'http:' && protocol !== 'https:' && protocol !== 'mailto:') return;
-  shell.openExternal(url).catch(err => console.error('Failed to open link:', err));
+  if (protocol === 'http:' || protocol === 'https:' || protocol === 'mailto:') {
+    shell.openExternal(url).catch(err => console.error('Failed to open link:', err));
+  } else if (protocol === 'file:') {
+    const file = openableFilePath(url);
+    if (!file) return;
+    shell.openPath(file).then(err => { if (err) console.error('Failed to open file:', file, err); });
+  } else {
+    return;
+  }
   if (isOverlayVisible()) closeOverlayAndNotify();
+}
+
+// Opening a file link runs whatever the file's default action is, and notes can
+// come from opened .md files or AI agents. So only local documents and folders
+// open: programs, scripts and shortcuts don't, nor anything on a network share.
+const BLOCKED_FILE_TYPES = new Set([
+  '.exe', '.com', '.scr', '.pif', '.bat', '.cmd', '.ps1', '.psm1', '.vbs', '.vbe', '.js', '.jse',
+  '.wsf', '.wsh', '.ws', '.msc', '.hta', '.cpl', '.msi', '.msp', '.jar', '.reg', '.inf', '.scf',
+  '.lnk', '.url', '.appref-ms', '.application', '.gadget', '.sct',
+]);
+
+function openableFilePath(url: string): string | null {
+  let file: string;
+  try { file = fileURLToPath(url); } catch { return null; }
+  if (file.startsWith('\\\\')) return null; // network share (\\server\share)
+  // Relative links ([x](plan.md)) resolve against the app's own files.
+  if (!path.relative(app.getAppPath(), file).startsWith('..')) return null;
+  if (BLOCKED_FILE_TYPES.has(path.extname(file).toLowerCase())) {
+    console.error('Refusing to open program or script from a note link:', file);
+    return null;
+  }
+  return file;
 }
 
 app.on('web-contents-created', (_e, contents) => {
