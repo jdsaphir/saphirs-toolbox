@@ -21,6 +21,15 @@ const PURIFY_CONFIG = {
   FORBID_ATTR: ['style'],
 };
 
+// Task lists (`- [x] done`) are the only reason to keep <input>: marked renders
+// them as disabled checkboxes. Any other input (file pickers, password boxes…)
+// goes, and checkboxes stay read-only.
+DOMPurify.addHook('uponSanitizeElement', (node, data) => {
+  if (data.tagName !== 'input' || !(node instanceof HTMLInputElement)) return;
+  if (node.type === 'checkbox') node.disabled = true;
+  else node.remove();
+});
+
 export function renderMarkdown(source: string): string {
   const html = marked.parse(source || '', { async: false }) as string;
   return DOMPurify.sanitize(html, PURIFY_CONFIG);
