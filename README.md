@@ -10,7 +10,7 @@ A floating utility companion for Windows. A small dolphin button hovers over eve
 - **To-do sheets** — 18 rows per sheet, with rich checkbox states (in progress, done, meeting, deferred, delegated, important, comment, optional, personal, follow-up, canceled, and reserved states for future use). Drag rows to reorder.
 - **Date header** — type any date in the title (e.g. `5/12/2026`) and it displays as "Tuesday, May 12th, 2026 (Week 20)".
 - **Sheet history** — unlimited sheets, navigated with `‹ ›` or the sheets dropdown.
-- **Notes** — two Markdown pads beside the to-do list, each with its own edit/preview toggle and `.md` open/save:
+- **Notes** — two Markdown pads beside the to-do list, each with its own edit/preview toggle and `.md` open/save. Links in the preview open in your default browser (or mail app) and close the toolbox:
   - **Day Notes** — belongs to the displayed sheet, so every day has its own notes.
   - **Scratchpad** — permanent; stays the same whichever day is displayed.
 - **Calculator** — basic arithmetic with keyboard support.

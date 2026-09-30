@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, screen, shell } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import { IPC } from '../shared/ipc';
@@ -77,6 +77,29 @@ function closeOverlayAndNotify() {
   hideOverlay();
   broadcast(IPC.ToolboxState, { open: false });
 }
+
+// Links in the notes previews are plain <a> tags. Left alone, a click loads the
+// site inside the full-screen overlay itself (or a new bare window for Ctrl- and
+// middle-clicks). Send web and mail links to the default apps instead, and close
+// the overlay so the browser isn't hidden behind it. Anything else is ignored.
+function openLinkExternally(url: string) {
+  let protocol: string;
+  try { protocol = new URL(url).protocol; } catch { return; }
+  if (protocol !== 'http:' && protocol !== 'https:' && protocol !== 'mailto:') return;
+  shell.openExternal(url).catch(err => console.error('Failed to open link:', err));
+  if (isOverlayVisible()) closeOverlayAndNotify();
+}
+
+app.on('web-contents-created', (_e, contents) => {
+  contents.setWindowOpenHandler(({ url }) => {
+    openLinkExternally(url);
+    return { action: 'deny' };
+  });
+  contents.on('will-navigate', (e, url) => {
+    e.preventDefault();
+    openLinkExternally(url);
+  });
+});
 
 function quitApp() {
   // Unregister shortcuts and let the app exit cleanly
