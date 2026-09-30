@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { marked } from 'marked';
+import { renderMarkdown } from '../shared/markdown';
 import { api } from '../shared/api';
 
 interface Props {
@@ -33,7 +33,7 @@ export const ScratchpadWidget: React.FC<Props> = ({ title, value, onChange, mode
   }
 
   const renderedHtml = preview
-    ? (marked.parse(value || '') as string)
+    ? renderMarkdown(value)
     : '';
 
   return (
