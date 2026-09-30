@@ -21,6 +21,31 @@ const PURIFY_CONFIG = {
   FORBID_ATTR: ['style'],
 };
 
+// Let links point at plain Windows paths (C:\notes\plan.md or C:/notes/plan.md)
+// as well as file:/// URLs. Chromium would treat "C:" as an unknown scheme, and
+// the sanitizer would strip it; as a file URL, it survives and the main process
+// opens it in the file's default app. The path is taken literally, so each
+// segment is encoded: "chapter#1.md" must not turn into "chapter" plus a fragment.
+marked.use({
+  walkTokens(token) {
+    if (token.type === 'link' && /^[a-z]:[\\/]/i.test(token.href)) {
+      const [drive, ...segments] = token.href.split(/[\\/]/);
+      token.href = 'file:///' + [drive, ...segments.map(encodeURIComponent)].join('/');
+    }
+  },
+});
+
+// A relative link (plan.md, ../plan.md, //host/plan.md) resolves against the
+// app's own files, never next to the note, so it can only go somewhere
+// unintended. Drop its target; #anchors stay.
+DOMPurify.addHook('afterSanitizeAttributes', node => {
+  if (!(node instanceof HTMLAnchorElement)) return;
+  const href = node.getAttribute('href');
+  if (href !== null && !href.startsWith('#') && !/^[a-z][a-z0-9+.-]*:/i.test(href)) {
+    node.removeAttribute('href');
+  }
+});
+
 // Task lists (`- [x] done`) are the only reason to keep <input>: marked renders
 // them as disabled checkboxes. Any other input (file pickers, password boxes…)
 // goes, and checkboxes stay read-only.

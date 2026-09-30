@@ -1,6 +1,7 @@
-import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, screen, shell } from 'electron';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { IPC } from '../shared/ipc';
 import { createTray } from './tray';
 import {
@@ -77,6 +78,75 @@ function closeOverlayAndNotify() {
   hideOverlay();
   broadcast(IPC.ToolboxState, { open: false });
 }
+
+// Links in the notes previews are plain <a> tags. Left alone, a click loads the
+// site inside the full-screen overlay itself (or a new bare window for Ctrl- and
+// middle-clicks). Send web and mail links to the default apps and file links to
+// the file's default app instead, and close the overlay so what opens isn't
+// hidden behind it, but only once something has actually opened. Anything else
+// is ignored.
+async function openLinkExternally(url: string) {
+  let protocol: string;
+  try { protocol = new URL(url).protocol; } catch { return; }
+  if (protocol === 'http:' || protocol === 'https:' || protocol === 'mailto:') {
+    try { await shell.openExternal(url); } catch (err) { console.error('Failed to open link:', err); return; }
+  } else if (protocol === 'file:') {
+    const file = openableFilePath(url);
+    if (!file) return;
+    // Windows shows its own "cannot find" dialog for a missing file, so check
+    // first and leave the toolbox open instead.
+    if (!fs.existsSync(file)) { console.error('Linked file not found:', file); return; }
+    const err = await shell.openPath(file);
+    if (err) { console.error('Failed to open file:', file, err); return; }
+  } else {
+    return;
+  }
+  if (isOverlayVisible()) closeOverlayAndNotify();
+}
+
+// Opening a file link runs whatever the file's default action is, and notes can
+// come from opened .md files or AI agents. So file types that Windows runs
+// (programs, scripts, installers, shortcuts, and anything else in PATHEXT) are
+// refused, as is anything on a network share. Other files and folders open.
+const BLOCKED_FILE_TYPES = new Set([
+  '.exe', '.com', '.scr', '.pif', '.bat', '.cmd', '.ps1', '.psm1', '.psd1', '.ps1xml', '.psc1',
+  '.vb', '.vbs', '.vbe', '.js', '.jse', '.wsf', '.wsh', '.ws', '.wsc', '.sct', '.hta', '.chm',
+  '.hlp', '.msc', '.cpl', '.msi', '.msp', '.mst', '.msix', '.msixbundle', '.appx', '.appxbundle',
+  '.appinstaller', '.application', '.appref-ms', '.gadget', '.diagcab', '.jar', '.reg', '.inf',
+  '.scf', '.lnk', '.url', '.website', '.settingcontent-ms', '.search-ms', '.library-ms',
+  '.py', '.pyw', '.pyc', '.pyo', '.pyz', '.pyzw', '.pl', '.rb', '.rbw', '.tcl', '.ahk', '.au3',
+  '.xll', '.xlam', '.ppam', '.iqy', '.slk',
+  ...(process.env.PATHEXT ?? '').toLowerCase().split(';').filter(Boolean),
+]);
+
+function openableFilePath(url: string): string | null {
+  let file: string;
+  try { file = fileURLToPath(url); } catch { return null; }
+  if (file.startsWith('\\\\')) return null; // network share (\\server\share)
+  // A colon past the drive letter names an alternate data stream (x.txt:y.exe).
+  if (file.indexOf(':', 2) !== -1) return null;
+  // Relative links are dropped when notes are rendered; this catches any that
+  // still point into the app's own files.
+  if (!path.relative(app.getAppPath(), file).startsWith('..')) return null;
+  // Windows ignores trailing dots and spaces, so "run.exe. " is run.exe.
+  const type = path.extname(file.replace(/[. ]+$/, '')).toLowerCase();
+  if (BLOCKED_FILE_TYPES.has(type)) {
+    console.error('Refusing to open program or script from a note link:', file);
+    return null;
+  }
+  return file;
+}
+
+app.on('web-contents-created', (_e, contents) => {
+  contents.setWindowOpenHandler(({ url }) => {
+    void openLinkExternally(url);
+    return { action: 'deny' };
+  });
+  contents.on('will-navigate', (e, url) => {
+    e.preventDefault();
+    void openLinkExternally(url);
+  });
+});
 
 function quitApp() {
   // Unregister shortcuts and let the app exit cleanly
