@@ -6,11 +6,13 @@ import DOMPurify from 'dompurify';
 // overlay has the whole window.toolbox API, so a note like
 // `<img src=x onerror="…">` or `[x](javascript:…)` must never reach the DOM as-is.
 // DOMPurify drops scripts, event handlers and anything that isn't plain
-// document markup; links may only point at web or mail addresses (or anchors).
+// document markup; links may only point at web or mail addresses, local files
+// (or anchors). A file: link does nothing in the page itself: clicking it goes
+// to the main process, which decides whether the file is safe to open.
 // DOMPurify checks every attribute value against this, not just URLs, so it's
-// its default pattern with the scheme list cut down: http(s)/mailto, or a value
-// with no scheme at all (like `checkbox` or `#heading`).
-const SAFE_URL = /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i;
+// its default pattern with the scheme list cut down: http(s)/mailto/file, or a
+// value with no scheme at all (like `checkbox` or `#heading`).
+const SAFE_URL = /^(?:(?:https?|mailto|file):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i;
 
 const PURIFY_CONFIG = {
   USE_PROFILES: { html: true },
