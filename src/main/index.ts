@@ -93,6 +93,9 @@ async function openLinkExternally(url: string) {
   } else if (protocol === 'file:') {
     const file = openableFilePath(url);
     if (!file) return;
+    // Windows shows its own "cannot find" dialog for a missing file, so check
+    // first and leave the toolbox open instead.
+    if (!fs.existsSync(file)) { console.error('Linked file not found:', file); return; }
     const err = await shell.openPath(file);
     if (err) { console.error('Failed to open file:', file, err); return; }
   } else {
