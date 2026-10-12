@@ -164,9 +164,10 @@ function isBlank(t: TodoItem): boolean {
   return t.text.trim() === '' && t.progress === 'empty' && flagsOf(t).length === 0;
 }
 
-// Todo text is a single-line input in the app.
+// Todo text is a single-line input in the app. Leading spaces are kept: they
+// are how a to-do is indented under the one above.
 function cleanText(text: string): string {
-  return text.replace(/\s*[\r\n]+\s*/g, ' ').trim();
+  return text.replace(/^\s*[\r\n]+/, '').replace(/\s*[\r\n]+\s*/g, ' ').trimEnd();
 }
 
 function itemFrom(input: ToolArgs): TodoItem {

@@ -87,7 +87,7 @@ const FLAGS = (description: string): JsonSchema => ({ type: 'array', items: { ty
 const ITEM: JsonSchema = {
   type: 'object',
   properties: {
-    text: { type: 'string', description: 'The to-do text (single line).' },
+    text: { type: 'string', description: 'The to-do text (single line). Leading spaces are kept, so start with spaces to indent a to-do under the one above.' },
     status: { ...STATUS, description: 'Defaults to "todo".' },
     flags: FLAGS('Flags to set, e.g. ["important"].'),
   },
@@ -217,7 +217,7 @@ export const AGENT_TOOLS: AgentTool[] = [
       sheetId: SHEET_ID,
       row: ROW,
       match: MATCH,
-      text: { type: 'string', description: 'New text.' },
+      text: { type: 'string', description: 'New text. Leading spaces are kept (indentation).' },
       status: STATUS,
       flags: FLAGS('Replace all flags with exactly these ([] clears them).'),
       addFlags: FLAGS('Flags to turn on.'),
