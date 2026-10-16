@@ -6,6 +6,15 @@ export const MIN = 60_000;
 export const HOUR = 60 * MIN;
 export const DAY = 24 * HOUR;
 
+// Date.UTC with every year taken literally: Date.UTC itself reads 0–99 as
+// 1900–1999, and the date field passes years like 0002 while "2026" is being
+// typed.
+export function utc(y: number, mo0: number, d: number, h = 0, mi = 0, s = 0): number {
+  const date = new Date(Date.UTC(2000, mo0, d, h, mi, s));
+  date.setUTCFullYear(y + date.getUTCFullYear() - 2000);
+  return date.getTime();
+}
+
 export interface WallParts { y: number; mo: number; d: number; h: number; mi: number; s: number }
 
 const partsFormatters = new Map<string, Intl.DateTimeFormat>();
@@ -30,7 +39,7 @@ export function wallParts(tz: string, ms: number): WallParts {
 // Minutes the zone is ahead of UTC at that instant (negative west of Greenwich).
 export function offsetMin(tz: string, ms: number): number {
   const p = wallParts(tz, ms);
-  return Math.round((Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi, p.s) - Math.floor(ms / 1000) * 1000) / MIN);
+  return Math.round((utc(p.y, p.mo - 1, p.d, p.h, p.mi, p.s) - Math.floor(ms / 1000) * 1000) / MIN);
 }
 
 // A wall-clock time in a zone, as UTC. When clocks spring forward the time
@@ -43,7 +52,7 @@ export type WallResolution =
   | { kind: 'ambiguous'; options: [number, number] };
 
 export function wallToUtc(tz: string, y: number, mo: number, d: number, h: number, mi: number): WallResolution {
-  const wall = Date.UTC(y, mo - 1, d, h, mi);
+  const wall = utc(y, mo - 1, d, h, mi);
   // The offsets in force a day either side cover any single transition.
   const before = offsetMin(tz, wall - DAY);
   const after = offsetMin(tz, wall + DAY);
@@ -69,8 +78,8 @@ export function transitions(tz: string, year: number): Transition[] {
   const cached = transitionCache.get(key);
   if (cached) return cached;
   const out: Transition[] = [];
-  let t = Date.UTC(year, 0, 1);
-  const end = Date.UTC(year + 1, 0, 1);
+  let t = utc(year, 0, 1);
+  const end = utc(year + 1, 0, 1);
   let prev = offsetMin(tz, t);
   while (t < end) {
     const next = t + DAY;
@@ -94,7 +103,7 @@ export function transitions(tz: string, year: number): Transition[] {
 // Standard time is the smaller of the January and July offsets, which holds in
 // both hemispheres (summer is July in the north, January in the south).
 function standardOffset(tz: string, year: number): number {
-  return Math.min(offsetMin(tz, Date.UTC(year, 0, 15)), offsetMin(tz, Date.UTC(year, 6, 15)));
+  return Math.min(offsetMin(tz, utc(year, 0, 15)), offsetMin(tz, utc(year, 6, 15)));
 }
 
 export function isDst(tz: string, ms: number): boolean {
@@ -118,7 +127,7 @@ export function nextTransition(tz: string, ms: number): Transition | null {
 // Days since the epoch of the zone's local date, to compare calendar days.
 export function dayIndex(tz: string, ms: number): number {
   const p = wallParts(tz, ms);
-  return Date.UTC(p.y, p.mo - 1, p.d) / DAY;
+  return utc(p.y, p.mo - 1, p.d) / DAY;
 }
 
 // ── Formatting ───────────────────────────────────────────────────────────────
@@ -298,7 +307,7 @@ export function zoneCatalog(): ZoneInfo[] {
   const countries = zoneCountries();
   const now = Date.now();
   const year = new Date(now).getUTCFullYear();
-  const jan = Date.UTC(year, 0, 15), jul = Date.UTC(year, 6, 15);
+  const jan = utc(year, 0, 15), jul = utc(year, 6, 15);
   catalog = ids.map(id => {
     const city = cityName(id);
     const country = countries.get(id) ?? '';

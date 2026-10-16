@@ -130,4 +130,4 @@ An MCP bridge is the app's own executable run as plain Node, started from the in
 
 ## Roadmap / not yet built
 
-- More tools: unit converter, color picker, clipboard history, regex tester, JSON formatter, world clock.
+- More tools: unit converter, color picker, clipboard history, regex tester, JSON formatter.

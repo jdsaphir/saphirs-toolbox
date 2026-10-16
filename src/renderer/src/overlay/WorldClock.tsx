@@ -3,7 +3,7 @@ import type { ClockFormat, Settings } from '../../../shared/types';
 import {
   DAY, MIN, abbreviation, dayIndex, deviceZone, formatDate, formatHours, formatOffset, formatShortDate,
   formatTime, formatWall, isDst, isValidZone, longZoneName, nextTransition, observesDst, offsetMin,
-  transitionWall, wallParts, wallToUtc, zoneInfo, genericZoneName, type WallResolution,
+  transitionWall, utc, wallParts, wallToUtc, zoneInfo, genericZoneName, type WallResolution,
 } from '../shared/timezones';
 
 interface Props {
@@ -24,8 +24,14 @@ function wallInputs(tz: string, ms: number): { date: string; time: string } {
   return { date: `${p.y}-${pad(p.mo)}-${pad(p.d)}`, time: `${pad(p.h)}:${pad(p.mi)}` };
 }
 
+// The moment `ms` as typed in `tz`. When that wall time happens twice there,
+// `second` records which of the two it is, so the moment doesn't move.
 function conversionAt(tz: string, ms: number): Conversion {
-  return { src: tz, ...wallInputs(tz, ms), second: false };
+  const inputs = wallInputs(tz, ms);
+  const p = wallParts(tz, ms);
+  const r = wallToUtc(tz, p.y, p.mo, p.d, p.h, p.mi);
+  const minute = Math.floor(ms / MIN) * MIN;
+  return { src: tz, ...inputs, second: r.kind === 'ambiguous' && r.options[1] === minute };
 }
 
 // The typed date and time as numbers, or null while either field is incomplete.
@@ -126,8 +132,8 @@ export const WorldClock: React.FC<Props> = ({ settings, onOpenSettings, onClose 
   // what that column showed, so the moment only moves by what was typed.
   function edit(tz: string, field: 'date' | 'time', value: string) {
     setConv(prev => {
-      const base = tz === prev.src ? prev : instant !== null ? conversionAt(tz, instant) : { ...prev, src: tz };
-      return { ...base, src: tz, [field]: value, second: tz === prev.src ? prev.second : false };
+      const base = tz === prev.src ? prev : instant !== null ? conversionAt(tz, instant) : { ...prev, src: tz, second: false };
+      return { ...base, src: tz, [field]: value };
     });
   }
 
@@ -312,7 +318,7 @@ const ResolutionNote: React.FC<{
   if (resolution.kind === 'ok') return null;
   const w = parseWall(conv)!;
   const typed = formatWall(w[3], w[4], hour12);
-  const day = formatShortDate('UTC', Date.UTC(w[0], w[1] - 1, w[2]));
+  const day = formatShortDate('UTC', utc(w[0], w[1] - 1, w[2]));
   if (resolution.kind === 'gap') {
     const t = formatTime(tz, resolution.utc, hour12);
     return (
