@@ -1,6 +1,6 @@
 # Saphir's Toolbox
 
-A floating utility companion for Windows. A small dolphin button hovers over every window; click it (or press a global shortcut) to expand a compact widget toolbox: a daily to-do sheet, a scratchpad, and an extensible toolbar of mini-tools (calculator, timer, settings).
+A floating utility companion for Windows. A small dolphin button hovers over every window; click it (or press a global shortcut) to expand a compact widget toolbox: a daily to-do sheet, a scratchpad, and an extensible toolbar of mini-tools (calculator, timer, calendar, world clock, settings).
 
 ## Features
 
@@ -15,12 +15,13 @@ A floating utility companion for Windows. A small dolphin button hovers over eve
   - **Scratchpad** — permanent; stays the same whichever day is displayed.
 - **Calculator** — basic arithmetic with keyboard support.
 - **Calendar** — month grid with ISO week numbers; click a date to open its task list (or create one on the spot). Dates that already have a list are marked with a dot, and a "Today" button jumps back to the current month. Week start (Sunday/Monday) is configurable in settings.
+- **World Clock** (🌐) — the time and date in your own time zone (taken from the device) and any others you pick, laid out west to east. Each zone shows its offset, its gap with yours, whether it's on summer time and when its clocks change next, all from the system's time zone database, so every place follows its own daylight saving dates (or none). Type a date and time under any zone to see that moment in all the others; the conversion applies the daylight saving rules in force on that date, and flags times that are skipped or repeated when clocks change.
 - **Timer / Stopwatch / Pomodoro** — runs in the background; remaining time appears as a pill above the dolphin icon. Timer length, and the Pomodoro work and break lengths, are set per session in the widget (Pomodoro defaults to 25 / 5).
 - **AI agents** — AI tools can read and update your to-do lists, Day Notes, Scratchpad and timer (see [AI agents](#ai-agents)):
   - **On this computer** (Claude Code, Claude Desktop & Cowork, Codex, or anything that speaks MCP or HTTP): connect them once from the Agent Console, and their changes show up in the toolbox right away.
   - **On another computer**: the **Agent Console** (🤖) runs commands an assistant writes for you. Copy the AI instructions into your chat, then paste the commands it produces; the console previews what each one does before you run it.
   - An **Activity** log lists everything agents did.
-- **Settings** — rebind the global shortcut by pressing keys; switch checkbox interaction mode (popup palette vs. left-click cycle); pick dolphin icon style and customize its colors (body/eye, plus the colors shown while the toolbox is open); set the app accent color; control toolbar expansion direction; choose whether the calendar week starts on Sunday or Monday. The installed version is shown beside the Quit button, with how often to check for updates (every hour, every day, only at startup, or never) and a **Check now** button.
+- **Settings** — rebind the global shortcut by pressing keys; switch checkbox interaction mode (popup palette vs. left-click cycle); pick dolphin icon style and customize its colors (body/eye, plus the colors shown while the toolbox is open); set the app accent color; control toolbar expansion direction; choose whether the calendar week starts on Sunday or Monday; pick the World Clock's time zones by searching a city, country or zone name ("Chicago", "Japan", "Pacific", "CET"), and its 12- or 24-hour format. The installed version is shown beside the Quit button, with how often to check for updates (every hour, every day, only at startup, or never) and a **Check now** button.
 
 ## Checkbox states
 

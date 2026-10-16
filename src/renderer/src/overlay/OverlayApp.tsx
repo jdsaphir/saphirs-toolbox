@@ -5,6 +5,7 @@ import { TodoWidget } from './TodoWidget';
 import { ScratchpadWidget } from './ScratchpadWidget';
 import { Calculator } from './Calculator';
 import { Calendar } from './Calendar';
+import { WorldClock } from './WorldClock';
 import { Timer, useTimerTicker } from './Timer';
 import { SettingsTool } from './SettingsTool';
 import { AgentConsole } from './AgentConsole';
@@ -13,12 +14,13 @@ import { formatSheetTitle, parseIsoDate } from '../../../shared/date-format';
 import { applyTimerAction, type TimerAction } from '../../../shared/timer-actions';
 import type { SheetSummary } from './SheetsDropdown';
 
-type ToolId = 'calculator' | 'timer' | 'calendar' | 'agent' | 'settings' | null;
+type ToolId = 'calculator' | 'timer' | 'calendar' | 'worldclock' | 'agent' | 'settings' | null;
 
 const TOOLBAR_TOOLS: Array<{ id: NonNullable<ToolId>; label: string; icon: string }> = [
   { id: 'calculator', label: 'Calculator', icon: '🧮' },
   { id: 'timer', label: 'Timer', icon: '⏱' },
   { id: 'calendar', label: 'Calendar', icon: '📅' },
+  { id: 'worldclock', label: 'World Clock', icon: '🌐' },
   { id: 'agent', label: 'Agent Console', icon: '🤖' },
   { id: 'settings', label: 'Settings', icon: '⚙' },
 ];
@@ -395,6 +397,13 @@ export const OverlayApp: React.FC = () => {
               sheets={sheets}
               activeDate={sheet.displayDate}
               onPickDate={pickDate}
+              onClose={() => setActiveTool(null)}
+            />
+          )}
+          {activeTool === 'worldclock' && (
+            <WorldClock
+              settings={settings}
+              onOpenSettings={() => setActiveTool('settings')}
               onClose={() => setActiveTool(null)}
             />
           )}

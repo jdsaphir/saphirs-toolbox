@@ -108,9 +108,9 @@ const api = {
     ipcRenderer.on(IPC.OpenSettingsTab, listener);
     return () => ipcRenderer.removeListener(IPC.OpenSettingsTab, listener);
   },
-  requestOpenTool: (tool: 'calculator' | 'timer' | 'calendar' | 'agent' | 'settings') => ipcRenderer.send(IPC.RequestOpenTool, tool),
-  onOpenToolTab: (cb: (tool: 'calculator' | 'timer' | 'calendar' | 'agent' | 'settings') => void) => {
-    const listener = (_e: unknown, tool: 'calculator' | 'timer' | 'calendar' | 'agent' | 'settings') => cb(tool);
+  requestOpenTool: (tool: 'calculator' | 'timer' | 'calendar' | 'worldclock' | 'agent' | 'settings') => ipcRenderer.send(IPC.RequestOpenTool, tool),
+  onOpenToolTab: (cb: (tool: 'calculator' | 'timer' | 'calendar' | 'worldclock' | 'agent' | 'settings') => void) => {
+    const listener = (_e: unknown, tool: 'calculator' | 'timer' | 'calendar' | 'worldclock' | 'agent' | 'settings') => cb(tool);
     ipcRenderer.on(IPC.OpenToolTab, listener);
     return () => ipcRenderer.removeListener(IPC.OpenToolTab, listener);
   },

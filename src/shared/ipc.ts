@@ -44,7 +44,7 @@ export const IPC = {
   UpdateStatusGet: 'app:update-status',   // renderer -> main: current status
   UpdateStatusChanged: 'app:update-changed', // main -> renderer
   OpenSettingsTab: 'app:open-settings', // main -> overlay renderer
-  OpenToolTab: 'app:open-tool',         // main -> overlay renderer; payload: 'calculator' | 'timer' | 'settings'
+  OpenToolTab: 'app:open-tool',         // main -> overlay renderer; payload: a toolbar tool id
   RequestOpenTool: 'app:request-tool',  // renderer -> main; payload: tool id
   ClipboardWrite: 'app:clipboard-write',
 

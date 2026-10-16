@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../shared/api';
 import type { Settings, UpdateCheckInterval, UpdateStatus } from '../../../shared/types';
+import { WorldClockSettings } from './WorldClockSettings';
 
 interface Props {
   settings: Settings;
@@ -119,6 +120,8 @@ export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
           <option value="monday">Monday</option>
         </select>
       </div>
+
+      <WorldClockSettings local={local} save={save} />
 
       <div className="section-label">Dolphin colors</div>
       <div className="color-grid">

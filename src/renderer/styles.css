@@ -674,6 +674,123 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .timer-set-label { font-size: 11px; color: var(--text-dim); }
 .timer-phase-label { text-align: center; font-size: 11px; color: var(--text-dim); }
 
+/* ───────────────────────────── World clock ───────────────────────────────── */
+
+/* One column per zone, west to east. Wide enough lists scroll sideways
+   instead of pushing the window past the screen. */
+.wc-widget { max-width: calc(100vw - 32px); }
+.wc-widget .widget-header .actions .icon { font-size: 11px; padding: 2px 6px; }
+.wc-columns { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.wc-columns::-webkit-scrollbar { height: 8px; }
+.wc-columns::-webkit-scrollbar-track { background: transparent; }
+.wc-columns::-webkit-scrollbar-thumb { background: rgba(120, 170, 230, 0.25); border-radius: 4px; }
+.wc-col {
+  flex: 0 0 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.15);
+  min-width: 0;
+}
+.wc-col.local { background: color-mix(in srgb, var(--accent) 10%, rgba(0, 0, 0, 0.15)); }
+.wc-head { min-width: 0; }
+.wc-city { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wc-night { color: var(--text-dim); font-weight: 400; }
+.wc-sub { font-size: 11px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wc-col.local .wc-sub { color: var(--accent); }
+.wc-time { font-size: 24px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; line-height: 1.2; }
+.wc-secs { font-size: 13px; color: var(--text-dim); }
+.wc-ampm { font-size: 12px; color: var(--text-dim); margin-left: 4px; }
+.wc-date { font-size: 11px; color: var(--text-dim); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.wc-meta, .wc-convert-meta { font-size: 11px; color: var(--text-dim); display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; font-variant-numeric: tabular-nums; }
+.wc-rel { color: var(--text); }
+.wc-chip {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 16px;
+  background: rgba(120, 170, 230, 0.14);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.wc-chip.abbr { color: var(--accent); }
+.wc-chip.shift { background: color-mix(in srgb, var(--warning) 22%, transparent); color: var(--warning); }
+.wc-dst { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; font-size: 11px; color: var(--text-dim); }
+.wc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 16px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.wc-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.wc-pill.on { color: var(--important); border-color: color-mix(in srgb, var(--important) 50%, transparent); }
+.wc-pill.off { color: var(--text-dim); }
+.wc-pill.none { color: var(--text-comment); border-style: dashed; }
+.wc-pill.none::before { background: transparent; border: 1px solid currentColor; width: 4px; height: 4px; }
+.wc-next.soon { color: var(--warning); }
+
+.wc-convert {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.wc-convert-label { font-size: 10px; color: var(--text-comment); text-transform: uppercase; letter-spacing: 0.05em; }
+.wc-col.source { border-color: var(--accent); }
+.wc-col.source .wc-convert-label { color: var(--accent); }
+.wc-fields { display: flex; flex-direction: column; gap: 4px; }
+.wc-fields input { width: 100%; color-scheme: dark; font-variant-numeric: tabular-nums; }
+.wc-fields input.invalid { border-color: var(--danger); }
+.wc-note { font-size: 11px; line-height: 1.4; color: var(--text-dim); background: rgba(255, 179, 71, 0.1); border-radius: var(--radius-sm); padding: 4px 6px; }
+.wc-note b { color: var(--warning); font-weight: 600; }
+.wc-note-choices { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+.wc-note-choices button { font-size: 11px; padding: 2px 6px; }
+.wc-add {
+  flex: 0 0 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-style: dashed;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-align: center;
+}
+.wc-add-plus { font-size: 22px; color: var(--accent); line-height: 1; }
+
+/* World clock settings: the chosen zones, then the search and its matches. */
+.wcs-list { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+.wcs-zone, .wcs-result {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 6px;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.18);
+  text-align: left;
+}
+.wcs-zone.fixed { background: color-mix(in srgb, var(--accent) 10%, rgba(0, 0, 0, 0.18)); }
+.wcs-city { font-weight: 600; grid-column: 1; }
+.wcs-desc { font-size: 11px; color: var(--text-dim); grid-column: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wcs-remove { grid-column: 2; grid-row: 1 / span 2; }
+.wcs-results { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+.wcs-result { border: 1px solid transparent; width: 100%; }
+.wcs-result:hover:not(:disabled) { border-color: var(--accent); }
+.wcs-result:disabled { opacity: 0.5; cursor: default; }
+
 /* ──────────────────────────── Settings widget ────────────────────────────── */
 
 .settings-widget { width: 340px; max-height: 70vh; overflow-y: auto; }
