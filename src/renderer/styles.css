@@ -684,8 +684,12 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .wc-columns::-webkit-scrollbar { height: 8px; }
 .wc-columns::-webkit-scrollbar-track { background: transparent; }
 .wc-columns::-webkit-scrollbar-thumb { background: rgba(120, 170, 230, 0.25); border-radius: 4px; }
+/* An explicit width, not only a flex basis: Electron's Chromium sizes the
+   window from each column's widest unwrapped line otherwise, which leaves a
+   wide empty band to the right of the last column. */
 .wc-col {
-  flex: 0 0 168px;
+  flex: none;
+  width: 168px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -757,7 +761,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .wc-note-choices { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
 .wc-note-choices button { font-size: 11px; padding: 2px 6px; }
 .wc-add {
-  flex: 0 0 140px;
+  flex: none;
+  width: 140px;
   display: flex;
   flex-direction: column;
   align-items: center;
