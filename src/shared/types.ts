@@ -47,6 +47,8 @@ export type WeekStart = 'sunday' | 'monday';
 // original behaviour (the check on launch and nothing more); 'never' turns it
 // off entirely. The hourly and daily settings also check on launch.
 export type UpdateCheckInterval = 'hourly' | 'daily' | 'startup' | 'never';
+// World Clock time format: 'auto' follows the system's regional setting.
+export type ClockFormat = 'auto' | '12h' | '24h';
 
 export interface Settings {
   shortcut: string;                        // Electron accelerator
@@ -70,6 +72,10 @@ export interface Settings {
   agentApiToken: string;
   // Auto-update (installed build only).
   updateCheckInterval: UpdateCheckInterval;
+  // World Clock: IANA zone ids shown beside the device's own zone, which is
+  // always shown and not stored here. The widget orders them by UTC offset.
+  worldClockZones: string[];
+  worldClockFormat: ClockFormat;
 }
 
 // What the Settings panel shows about updating. 'unsupported' covers the
