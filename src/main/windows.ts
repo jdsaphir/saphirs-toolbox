@@ -72,6 +72,8 @@ export function createDolphinWindow(): BrowserWindow {
   });
   dolphinWindow.setAlwaysOnTop(true, 'screen-saver');
   keepPinned(dolphinWindow);
+  const dolphin = dolphinWindow;
+  dolphin.on('closed', () => { if (dolphinWindow === dolphin) dolphinWindow = null; });
   dolphinWindow.setTitle("Saphir's Toolbox");
 
   dolphinWindow.loadURL(pageUrl('dolphin.html'));
@@ -117,6 +119,10 @@ export function createOverlayWindow(): BrowserWindow {
   });
   overlayWindow.setAlwaysOnTop(true, 'screen-saver');
   keepPinned(overlayWindow);
+  // Drop the reference once the window is gone (e.g. Alt+F4) so nothing calls
+  // into a destroyed BrowserWindow, and showOverlay() can make a new one.
+  const overlay = overlayWindow;
+  overlay.on('closed', () => { if (overlayWindow === overlay) overlayWindow = null; });
   overlayWindow.setTitle("Saphir's Toolbox");
   overlayWindow.setMenu(null);
   overlayWindow.loadURL(pageUrl('overlay.html'));
@@ -131,7 +137,7 @@ export function createOverlayWindow(): BrowserWindow {
 }
 
 export function showOverlay(): { center: { x: number; y: number } } {
-  if (!overlayWindow) createOverlayWindow();
+  if (!alive(overlayWindow)) createOverlayWindow();
   const w = overlayWindow!;
 
   // Pick the display that contains the dolphin (multi-monitor support).
@@ -162,14 +168,14 @@ export function showOverlay(): { center: { x: number; y: number } } {
 }
 
 export function hideOverlay(): void {
-  overlayWindow?.hide();
+  if (alive(overlayWindow)) overlayWindow.hide();
   // Hiding the focused overlay hands focus to another app; make sure the
   // dolphin stays above it.
   raiseDolphin();
 }
 
 export function isOverlayVisible(): boolean {
-  return !!overlayWindow?.isVisible();
+  return alive(overlayWindow) && overlayWindow.isVisible();
 }
 
 // ── Dolphin drag ─────────────────────────────────────────────────────────────
@@ -211,7 +217,23 @@ export function getDolphinScreenCenter(): { x: number; y: number } {
 // we re-apply them on those events and on a slow heartbeat.
 
 const WATCHDOG_MS = 3000;
+const SETTLE_MS = 1000;
 let watchdog: NodeJS.Timeout | null = null;
+let settleTimer: NodeJS.Timeout | null = null;
+
+// Some of these events fire before Windows has finished settling, so check
+// again shortly after as well.
+function reassertSoon(): void {
+  reassertWindowFlags();
+  if (settleTimer) clearTimeout(settleTimer);
+  settleTimer = setTimeout(() => {
+    settleTimer = null;
+    reassertWindowFlags();
+  }, SETTLE_MS);
+}
+
+const POWER_EVENTS = ['resume', 'unlock-screen'] as const;
+const SCREEN_EVENTS = ['display-added', 'display-removed', 'display-metrics-changed'] as const;
 
 function alive(w: BrowserWindow | null): w is BrowserWindow {
   return !!w && !w.isDestroyed();
@@ -255,21 +277,16 @@ export function reassertWindowFlags(): void {
 
 export function startWindowWatchdog(): void {
   if (watchdog) return;
-  // Some of these fire before Windows has finished settling, so check again
-  // shortly after as well.
-  const soon = () => {
-    reassertWindowFlags();
-    setTimeout(reassertWindowFlags, 1000);
-  };
-  powerMonitor.on('resume', soon);
-  powerMonitor.on('unlock-screen', soon);
-  screen.on('display-added', soon);
-  screen.on('display-removed', soon);
-  screen.on('display-metrics-changed', soon);
+  for (const e of POWER_EVENTS) powerMonitor.on(e as 'resume', reassertSoon);
+  for (const e of SCREEN_EVENTS) screen.on(e as 'display-added', reassertSoon);
   watchdog = setInterval(reassertWindowFlags, WATCHDOG_MS);
 }
 
 export function stopWindowWatchdog(): void {
   if (watchdog) clearInterval(watchdog);
   watchdog = null;
+  if (settleTimer) clearTimeout(settleTimer);
+  settleTimer = null;
+  for (const e of POWER_EVENTS) powerMonitor.removeListener(e as 'resume', reassertSoon);
+  for (const e of SCREEN_EVENTS) screen.removeListener(e as 'display-added', reassertSoon);
 }
