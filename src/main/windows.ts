@@ -1,4 +1,4 @@
-import { BrowserWindow, screen } from 'electron';
+import { BrowserWindow, powerMonitor, screen } from 'electron';
 import path from 'path';
 import { getSettings, setSettings } from './db';
 
@@ -71,6 +71,9 @@ export function createDolphinWindow(): BrowserWindow {
     },
   });
   dolphinWindow.setAlwaysOnTop(true, 'screen-saver');
+  keepPinned(dolphinWindow);
+  const dolphin = dolphinWindow;
+  dolphin.on('closed', () => { if (dolphinWindow === dolphin) dolphinWindow = null; });
   dolphinWindow.setTitle("Saphir's Toolbox");
 
   dolphinWindow.loadURL(pageUrl('dolphin.html'));
@@ -115,6 +118,11 @@ export function createOverlayWindow(): BrowserWindow {
     },
   });
   overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+  keepPinned(overlayWindow);
+  // Drop the reference once the window is gone (e.g. Alt+F4) so nothing calls
+  // into a destroyed BrowserWindow, and showOverlay() can make a new one.
+  const overlay = overlayWindow;
+  overlay.on('closed', () => { if (overlayWindow === overlay) overlayWindow = null; });
   overlayWindow.setTitle("Saphir's Toolbox");
   overlayWindow.setMenu(null);
   overlayWindow.loadURL(pageUrl('overlay.html'));
@@ -129,7 +137,7 @@ export function createOverlayWindow(): BrowserWindow {
 }
 
 export function showOverlay(): { center: { x: number; y: number } } {
-  if (!overlayWindow) createOverlayWindow();
+  if (!alive(overlayWindow)) createOverlayWindow();
   const w = overlayWindow!;
 
   // Pick the display that contains the dolphin (multi-monitor support).
@@ -147,17 +155,27 @@ export function showOverlay(): { center: { x: number; y: number } } {
   const abs = getDolphinScreenCenter();
   const localCenter = { x: abs.x - wa.x, y: abs.y - wa.y };
 
+  // Re-pin the dolphin first so it is back in the topmost band before the
+  // overlay is raised above it.
+  pinWindow(dolphinWindow);
   w.show();
+  // Windows can put a window back on the taskbar when it is shown again, even
+  // with skipTaskbar set at creation, so re-apply both flags after every show.
+  pinWindow(w);
+  w.moveTop();
   w.focus();
   return { center: localCenter };
 }
 
 export function hideOverlay(): void {
-  overlayWindow?.hide();
+  if (alive(overlayWindow)) overlayWindow.hide();
+  // Hiding the focused overlay hands focus to another app; make sure the
+  // dolphin stays above it.
+  raiseDolphin();
 }
 
 export function isOverlayVisible(): boolean {
-  return !!overlayWindow?.isVisible();
+  return alive(overlayWindow) && overlayWindow.isVisible();
 }
 
 // ── Dolphin drag ─────────────────────────────────────────────────────────────
@@ -188,4 +206,87 @@ export function getDolphinScreenCenter(): { x: number; y: number } {
   const [x, y] = dolphinWindow.getPosition();
   const [w, h] = dolphinWindow.getSize();
   return { x: x + w / 2, y: y + h / 2 };
+}
+
+// ── Keeping the windows topmost and off the taskbar ─────────────────────────
+//
+// Windows drops a window's topmost state or its "no taskbar button" state in
+// several situations Electron doesn't report: Explorer restarting, sleep and
+// resume, display changes, Show Desktop, fullscreen apps, or another topmost
+// window being raised over ours. Electron still believes the flags are set, so
+// we re-apply them on those events and on a slow heartbeat.
+
+const WATCHDOG_MS = 3000;
+const SETTLE_MS = 1000;
+let watchdog: NodeJS.Timeout | null = null;
+let settleTimer: NodeJS.Timeout | null = null;
+
+// Some of these events fire before Windows has finished settling, so check
+// again shortly after as well.
+function reassertSoon(): void {
+  reassertWindowFlags();
+  if (settleTimer) clearTimeout(settleTimer);
+  settleTimer = setTimeout(() => {
+    settleTimer = null;
+    reassertWindowFlags();
+  }, SETTLE_MS);
+}
+
+const POWER_EVENTS = ['resume', 'unlock-screen'] as const;
+const SCREEN_EVENTS = ['display-added', 'display-removed', 'display-metrics-changed'] as const;
+
+function alive(w: BrowserWindow | null): w is BrowserWindow {
+  return !!w && !w.isDestroyed();
+}
+
+function pinWindow(w: BrowserWindow | null): void {
+  if (!alive(w)) return;
+  w.setSkipTaskbar(true);
+  w.setAlwaysOnTop(true, 'screen-saver');
+}
+
+function keepPinned(w: BrowserWindow): void {
+  // If anything turns always-on-top off, turn it straight back on.
+  w.on('always-on-top-changed', (_e, isOnTop) => {
+    if (!isOnTop) pinWindow(w);
+  });
+  w.on('show', () => pinWindow(w));
+  w.on('restore', () => pinWindow(w));
+}
+
+/** Put the dolphin back on top of every other app, unless the overlay is open. */
+function raiseDolphin(): void {
+  if (!alive(dolphinWindow)) return;
+  pinWindow(dolphinWindow);
+  if (!dolphinWindow.isVisible() || dolphinWindow.isMinimized()) dolphinWindow.showInactive();
+  // While the overlay is open it sits above the dolphin on purpose; don't
+  // reorder the two.
+  if (!isOverlayVisible()) dolphinWindow.moveTop();
+}
+
+export function reassertWindowFlags(): void {
+  raiseDolphin();
+  if (alive(overlayWindow)) {
+    overlayWindow.setSkipTaskbar(true);
+    if (overlayWindow.isVisible()) {
+      overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+      overlayWindow.moveTop();
+    }
+  }
+}
+
+export function startWindowWatchdog(): void {
+  if (watchdog) return;
+  for (const e of POWER_EVENTS) powerMonitor.on(e as 'resume', reassertSoon);
+  for (const e of SCREEN_EVENTS) screen.on(e as 'display-added', reassertSoon);
+  watchdog = setInterval(reassertWindowFlags, WATCHDOG_MS);
+}
+
+export function stopWindowWatchdog(): void {
+  if (watchdog) clearInterval(watchdog);
+  watchdog = null;
+  if (settleTimer) clearTimeout(settleTimer);
+  settleTimer = null;
+  for (const e of POWER_EVENTS) powerMonitor.removeListener(e as 'resume', reassertSoon);
+  for (const e of SCREEN_EVENTS) screen.removeListener(e as 'display-added', reassertSoon);
 }

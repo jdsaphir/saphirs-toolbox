@@ -35,7 +35,10 @@ import {
   getOverlayWindow,
   hideOverlay,
   isOverlayVisible,
+  reassertWindowFlags,
   showOverlay,
+  startWindowWatchdog,
+  stopWindowWatchdog,
 } from './windows';
 import { DataChange, Settings, Sheet, TimerState } from '../shared/types';
 import type { TimerAction } from '../shared/timer-actions';
@@ -175,6 +178,7 @@ if (!gotSingleInstanceLock) {
       if (dw.isMinimized()) dw.restore();
       dw.show();
       dw.focus();
+      reassertWindowFlags();
     }
   });
 }
@@ -186,6 +190,7 @@ app.whenReady().then(() => {
 
   createDolphinWindow();
   createOverlayWindow();
+  startWindowWatchdog();
   registerShortcut(settings.shortcut);
 
   createTray({
@@ -379,6 +384,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('will-quit', () => {
+  stopWindowWatchdog();
   if (registeredShortcut) globalShortcut.unregister(registeredShortcut);
   shutdownAgentServer();
   // Last moment before electron-updater hands over to the installer.
