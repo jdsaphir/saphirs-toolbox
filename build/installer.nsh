@@ -14,7 +14,7 @@
   # installer was launched by the app, which is exactly what an auto-update is —
   # so close them here. The client starts a fresh bridge the next time it calls
   # the toolbox.
-  DetailPrint "Closing ${PRODUCT_NAME} and any MCP bridge it left behind..."
+  DetailPrint "Closing ${PRODUCT_NAME} and any MCP bridge it left behind (this can take a minute)..."
 
   # Match on the executable path, not the image name: a portable copy unpacks to
   # its own folder and a second install lives in another one, but both run an
@@ -26,13 +26,17 @@
   # the copy it makes in $PLUGINSDIR can't be started — there, an unguarded
   # sweep of $INSTDIR would kill the very uninstaller doing the work.
   #
-  # Closing them once is not enough (seen updating 1.5.2 → 1.6.0): an AI client
-  # can start a fresh bridge the moment its old one dies, and a process that was
-  # just killed can keep its executable locked for a while as Windows tears it
-  # down. Either one makes the uninstall step fail. So keep closing whatever
+  # Closing them once is not enough: an AI client can start a fresh bridge the
+  # moment its old one dies, and a closed process keeps its files locked until
+  # Windows has finished tearing it down. On some machines that teardown is very
+  # slow, killed or not: updating 1.6.0 → 1.6.1 on a PC with an NVIDIA GPU and
+  # Malwarebytes, the app's processes took 15–25 s to go away after a normal
+  # quit and up to 2.5 minutes after being killed, so a 10 s wait failed every
+  # time. Either one makes the uninstall step fail. So keep closing whatever
   # runs from $INSTDIR until two checks in a row find nothing running there and
-  # the app's executable can be opened exclusively, for up to 10 seconds. After
-  # that, carry on and let the uninstall step try anyway.
+  # the app's executable can be opened exclusively, for up to 4 minutes. After
+  # that, carry on and let the uninstall step try anyway. The quiet checks end
+  # the wait as soon as the folder is free, so a normal machine waits a second.
   #
   # $INSTDIR, the executable's name and the pid travel through the environment,
   # so no amount of spaces or quotes in them needs escaping here.
@@ -42,7 +46,7 @@
   System::Call 'kernel32::SetEnvironmentVariable(t "TOOLBOX_INSTDIR", t "$INSTDIR")'
   System::Call 'kernel32::SetEnvironmentVariable(t "TOOLBOX_EXE", t "${APP_EXECUTABLE_FILENAME}")'
   System::Call 'kernel32::SetEnvironmentVariable(t "TOOLBOX_KEEP_PID", t "$1")'
-  nsExec::Exec `powershell.exe -NoProfile -NonInteractive -Command "$$dir = $$env:TOOLBOX_INSTDIR.TrimEnd('\') + '\'; $$keep = [int]$$env:TOOLBOX_KEEP_PID; $$exe = $$dir + $$env:TOOLBOX_EXE; $$quiet = 0; $$deadline = (Get-Date).AddSeconds(10); while ((Get-Date) -lt $$deadline) { $$procs = @(Get-CimInstance Win32_Process | Where-Object { $$_.ProcessId -ne $$keep -and $$_.ExecutablePath -and $$_.ExecutablePath.StartsWith($$dir, [System.StringComparison]::OrdinalIgnoreCase) }); foreach ($$p in $$procs) { Stop-Process -Id $$p.ProcessId -Force -ErrorAction SilentlyContinue }; $$free = $$true; if (Test-Path -LiteralPath $$exe) { try { [System.IO.File]::Open($$exe, 'Open', 'ReadWrite', 'None').Close() } catch { $$free = $$false } }; if ($$procs.Count -eq 0 -and $$free) { $$quiet++; if ($$quiet -ge 2) { break } } else { $$quiet = 0 }; Start-Sleep -Milliseconds 250 }"`
+  nsExec::Exec `powershell.exe -NoProfile -NonInteractive -Command "$$dir = $$env:TOOLBOX_INSTDIR.TrimEnd('\') + '\'; $$keep = [int]$$env:TOOLBOX_KEEP_PID; $$exe = $$dir + $$env:TOOLBOX_EXE; $$quiet = 0; $$deadline = (Get-Date).AddSeconds(240); while ((Get-Date) -lt $$deadline) { $$procs = @(Get-CimInstance Win32_Process | Where-Object { $$_.ProcessId -ne $$keep -and $$_.ExecutablePath -and $$_.ExecutablePath.StartsWith($$dir, [System.StringComparison]::OrdinalIgnoreCase) }); foreach ($$p in $$procs) { Stop-Process -Id $$p.ProcessId -Force -ErrorAction SilentlyContinue }; $$free = $$true; if (Test-Path -LiteralPath $$exe) { try { [System.IO.File]::Open($$exe, 'Open', 'ReadWrite', 'None').Close() } catch { $$free = $$false } }; if ($$procs.Count -eq 0 -and $$free) { $$quiet++; if ($$quiet -ge 2) { break } } else { $$quiet = 0 }; Start-Sleep -Milliseconds 250 }"`
   Pop $0
   ${If} $0 != 0
     # No PowerShell to run the scoped query: fall back to the image name. It is
