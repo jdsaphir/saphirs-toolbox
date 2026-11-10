@@ -175,12 +175,29 @@ export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
       )}
 
       <div className="settings-footer">
-        <button
-          onClick={() => { if (confirm("Quit Saphir's Toolbox?")) api.quitApp(); }}
-          style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
-        >
-          Quit Saphir's Toolbox
-        </button>
+        {/* With an update downloaded, both buttons install it: Restart to
+            update reopens the app afterwards, Quit leaves it closed. */}
+        <div className="quit-buttons">
+          {update.state === 'ready' && (
+            <button
+              className="primary"
+              onClick={() => { if (confirm(`Restart Saphir's Toolbox to install v${update.version}?`)) api.quitApp({ restart: true }); }}
+            >
+              Restart to update
+            </button>
+          )}
+          <button
+            onClick={() => {
+              const question = update.state === 'ready'
+                ? `Quit Saphir's Toolbox? v${update.version} will install, and the app will stay closed.`
+                : "Quit Saphir's Toolbox?";
+              if (confirm(question)) api.quitApp();
+            }}
+            style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
+          >
+            Quit Saphir's Toolbox
+          </button>
+        </div>
         {/* The installed version, so it can be checked without leaving the app
             — the updater applies new ones silently. */}
         {version && <span className="app-version">v{version}</span>}
@@ -189,8 +206,8 @@ export const SettingsTool: React.FC<Props> = ({ settings, onClose }) => {
   );
 };
 
-// One short line under the button. A new version installs on quit, so 'ready'
-// says that rather than offering a restart the app can't usefully force. 'Idle'
+// One short line under the button. 'ready' points at the Restart to update
+// button below; Quit installs it too, leaving the app closed. 'Idle'
 // covers both the moment before the first check answers and the whole time
 // checks are turned off, and still says something: the row holds space for this
 // line either way.
@@ -199,7 +216,7 @@ function describeUpdate(u: UpdateStatus): string {
     case 'checking': return 'Checking…';
     case 'available': return `Found v${u.version}`;
     case 'downloading': return `Downloading v${u.version ?? ''} ${u.percent ?? 0}%`;
-    case 'ready': return `v${u.version} installs when you quit`;
+    case 'ready': return `v${u.version} is ready to install`;
     case 'up-to-date': return `Up to date${u.checkedAt ? ` · ${shortTime(u.checkedAt)}` : ''}`;
     case 'error': return u.error ? `Check failed: ${u.error}` : 'Check failed';
     default: return 'Not checked yet';
