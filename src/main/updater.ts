@@ -8,6 +8,7 @@ import { app } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import type { Settings, UpdateCheckInterval, UpdateStatus } from '../shared/types';
 import { visibleStatus } from '../shared/update-status';
+import { showUpdateProgress } from './update-progress';
 
 const INTERVAL_MS: Record<UpdateCheckInterval, number | null> = {
   hourly: 60 * 60 * 1000,
@@ -28,6 +29,20 @@ let checking = false;
 // there is nothing for the updater to replace.
 function supported(): boolean {
   return app.isPackaged && !process.env.PORTABLE_EXECUTABLE_FILE;
+}
+
+// The app's own Quit (tray menu or Settings) with an update downloaded: show
+// the progress window, start the installer and quit. The installer reopens the
+// app once it is done. Returns false when there is nothing to install, so the
+// caller quits normally.
+//
+// Other ways the app ends (signing out, shutting down) still install silently
+// through autoInstallOnAppQuit: a window would be pointless there.
+export function installUpdateOnQuit(): boolean {
+  if (!ready || !supported()) return false;
+  showUpdateProgress(ready);
+  autoUpdater.quitAndInstall(true, true);
+  return true;
 }
 
 export function onUpdateStatusChanged(listener: (s: UpdateStatus) => void): void {
