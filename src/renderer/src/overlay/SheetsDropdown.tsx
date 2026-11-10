@@ -140,11 +140,11 @@ export const SheetsDropdown: React.FC<Props> = ({ anchor, sheets, activeId, onSe
     const isOpen = open.has(key);
     return (
       <div key={key} className="card-group">
-        <div className="card-group-head" onClick={() => toggle(key)} aria-expanded={isOpen}>
-          <span className="caret">{isOpen ? '▾' : '▸'}</span>
+        <button type="button" className="card-group-head" onClick={() => toggle(key)} aria-expanded={isOpen}>
+          <span className="caret" aria-hidden="true">{isOpen ? '▾' : '▸'}</span>
           <span className="label-text">{label}</span>
           <span className="count">{count}</span>
-        </div>
+        </button>
         {isOpen && <div className="card-group-body">{children()}</div>}
       </div>
     );
