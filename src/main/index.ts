@@ -9,6 +9,7 @@ import {
   closeLeftoverBridges,
   getUpdateStatus,
   initAutoUpdater,
+  installUpdateOnQuit,
   onUpdateStatusChanged,
   scheduleUpdateChecks,
 } from './updater';
@@ -154,6 +155,8 @@ app.on('web-contents-created', (_e, contents) => {
 function quitApp() {
   // Unregister shortcuts and let the app exit cleanly
   if (registeredShortcut) globalShortcut.unregister(registeredShortcut);
+  // With an update downloaded, install it with a progress window and reopen.
+  if (installUpdateOnQuit()) return;
   app.quit();
 }
 
