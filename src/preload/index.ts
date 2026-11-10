@@ -94,7 +94,8 @@ const api = {
   copyText: (text: string) => ipcRenderer.invoke(IPC.ClipboardWrite, text) as Promise<boolean>,
 
   // App control
-  quitApp: () => ipcRenderer.invoke(IPC.AppQuit) as Promise<boolean>,
+  // With an update downloaded, both install it; `restart` reopens the app after.
+  quitApp: (opts?: { restart?: boolean }) => ipcRenderer.invoke(IPC.AppQuit, opts) as Promise<boolean>,
   getAppVersion: () => ipcRenderer.invoke(IPC.AppVersion) as Promise<string>,
   getUpdateStatus: () => ipcRenderer.invoke(IPC.UpdateStatusGet) as Promise<UpdateStatus>,
   checkForUpdates: () => ipcRenderer.invoke(IPC.UpdateCheckNow) as Promise<UpdateStatus>,

@@ -4,8 +4,9 @@
 // "install for me or everyone" and end on a Finish page, both of which need
 // clicks. Instead the app starts this small window just before it quits. It
 // follows the update from the outside (the app closing, the installer
-// running, the new version landing), reopens the app when it is done, and
-// says so plainly when the update did not finish.
+// running, the new version landing), reopens the app when it is done (Restart
+// to update) or just says it's done (Quit), and says so plainly when the
+// update did not finish.
 //
 // It is a PowerShell/WinForms script written to the temp folder, not part of
 // the app: anything running from the install folder would lock the very files
@@ -22,8 +23,11 @@ const SCRIPT = String.raw`
 param(
   [string]$Target = $env:TOOLBOX_UPDATE_TARGET,
   [string]$InstallDir = $env:TOOLBOX_UPDATE_INSTDIR,
-  [string]$AppExe = $env:TOOLBOX_UPDATE_EXE
+  [string]$AppExe = $env:TOOLBOX_UPDATE_EXE,
+  # Restart to update reopens the app afterwards; Quit leaves it closed.
+  [string]$Restart = $env:TOOLBOX_UPDATE_RESTART
 )
+$reopen = $Restart -ne '0'
 $ErrorActionPreference = 'SilentlyContinue'
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
@@ -66,7 +70,7 @@ $bar.Maximum = 3
 $form.Controls.Add($bar)
 
 $hint = New-Object System.Windows.Forms.Label
-$hint.Text = "$appName will reopen by itself when the update is done."
+$hint.Text = if ($reopen) { "$appName will reopen by itself when the update is done." } else { "$appName will stay closed after the update." }
 $hint.ForeColor = [System.Drawing.Color]::Gray
 $hint.SetBounds(16, 96, 408, 20)
 $form.Controls.Add($hint)
@@ -126,7 +130,7 @@ $timer = New-Object System.Windows.Forms.Timer
 $timer.Interval = 700
 $timer.Add_Tick({
   $elapsed = (Get-Date) - $script:start
-  if ($script:phase -ne 'failed') { $clock.Text = '{0}:{1:00}' -f [int][Math]::Floor($elapsed.TotalMinutes), $elapsed.Seconds }
+  if ($script:phase -notin 'failed', 'done') { $clock.Text = '{0}:{1:00}' -f [int][Math]::Floor($elapsed.TotalMinutes), $elapsed.Seconds }
   $installerRunning = @(Get-Installer).Count -gt 0
   if ($installerRunning) { $script:seenInstaller = $true }
 
@@ -134,10 +138,15 @@ $timer.Add_Tick({
   # over, whichever step this window was showing.
   if ($script:phase -in 'closing', 'installing' -and -not $installerRunning -and
       ($script:seenInstaller -or $elapsed.TotalSeconds -gt 30)) {
-    if (Test-Updated) {
+    if ((Test-Updated) -and $reopen) {
       $script:phase = 'starting'
       $script:doneAt = Get-Date
       Set-Step 3 "Updated. Starting $appName..."
+    } elseif (Test-Updated) {
+      $script:phase = 'done'
+      $script:doneAt = Get-Date
+      Set-Step 3 "Done. $appName is up to date."
+      $clock.Text = ''
     } else {
       $script:phase = 'failed'
     }
@@ -151,6 +160,10 @@ $timer.Add_Tick({
       } elseif ($elapsed.TotalSeconds -gt 90) {
         $step.Text = "Step 1 of 3: $appName is slow to close, still waiting..."
       }
+    }
+    'done' {
+      # Nothing to reopen: leave the result up a moment, then go.
+      if (((Get-Date) - $script:doneAt).TotalSeconds -gt 4) { $form.Close() }
     }
     'starting' {
       $since = ((Get-Date) - $script:doneAt).TotalSeconds
@@ -198,7 +211,7 @@ $form.Add_Shown({
 // short-lived PowerShell hands it to Start-Process, which launches it as an
 // independent process. The details travel through the environment, so the
 // apostrophe in the app's name and any odd characters in paths need no quoting.
-export function showUpdateProgress(targetVersion: string): void {
+export function showUpdateProgress(targetVersion: string, restart: boolean): void {
   if (process.platform !== 'win32') return;
   try {
     const file = path.join(os.tmpdir(), 'saphirs-toolbox-update-progress.ps1');
@@ -217,6 +230,7 @@ export function showUpdateProgress(targetVersion: string): void {
         TOOLBOX_UPDATE_TARGET: targetVersion,
         TOOLBOX_UPDATE_INSTDIR: path.dirname(process.execPath),
         TOOLBOX_UPDATE_EXE: process.execPath,
+        TOOLBOX_UPDATE_RESTART: restart ? '1' : '0',
       },
     });
     // A launch failure arrives here, not in the catch below.

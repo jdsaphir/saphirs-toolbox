@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { IPC } from '../shared/ipc';
-import { createTray } from './tray';
+import { createTray, refreshTray } from './tray';
 import {
   checkForUpdates,
   closeLeftoverBridges,
@@ -11,6 +11,7 @@ import {
   initAutoUpdater,
   installUpdateOnQuit,
   onUpdateStatusChanged,
+  readyUpdateVersion,
   scheduleUpdateChecks,
 } from './updater';
 import {
@@ -152,11 +153,13 @@ app.on('web-contents-created', (_e, contents) => {
   });
 });
 
-function quitApp() {
+// Quit, or restart. With an update downloaded, both install it (with a
+// progress window); restart then reopens the app, quit leaves it closed.
+function quitApp(opts: { restart?: boolean } = {}) {
   // Unregister shortcuts and let the app exit cleanly
   if (registeredShortcut) globalShortcut.unregister(registeredShortcut);
-  // With an update downloaded, install it with a progress window and reopen.
-  if (installUpdateOnQuit()) return;
+  if (installUpdateOnQuit(!!opts.restart)) return;
+  if (opts.restart) app.relaunch();
   app.quit();
 }
 
@@ -204,6 +207,8 @@ app.whenReady().then(() => {
       ov?.webContents.send(IPC.OpenSettingsTab);
     },
     onQuit: () => quitApp(),
+    onRestartToUpdate: () => quitApp({ restart: true }),
+    readyUpdateVersion,
   });
 
   // Auto-update: only meaningful for the NSIS-installed build. For the
@@ -211,7 +216,11 @@ app.whenReady().then(() => {
   // call is effectively a no-op (it logs an error and moves on). The dev
   // build is unpackaged and skipped entirely.
   initAutoUpdater(settings);
-  onUpdateStatusChanged(st => broadcast(IPC.UpdateStatusChanged, st));
+  onUpdateStatusChanged(st => {
+    broadcast(IPC.UpdateStatusChanged, st);
+    // The tray offers "Restart to update" only while an update is ready.
+    refreshTray();
+  });
 
   // ── Toolbox ────────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.ToolboxToggle, () => {
@@ -319,8 +328,8 @@ app.whenReady().then(() => {
   });
 
   // ── App control ────────────────────────────────────────────────────────────
-  ipcMain.handle(IPC.AppQuit, () => {
-    quitApp();
+  ipcMain.handle(IPC.AppQuit, (_e, opts?: { restart?: boolean }) => {
+    quitApp({ restart: !!opts?.restart });
     return true;
   });
   ipcMain.handle(IPC.AppVersion, () => app.getVersion());

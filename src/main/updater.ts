@@ -31,17 +31,23 @@ function supported(): boolean {
   return app.isPackaged && !process.env.PORTABLE_EXECUTABLE_FILE;
 }
 
-// The app's own Quit (tray menu or Settings) with an update downloaded: show
-// the progress window, start the installer and quit. The installer reopens the
-// app once it is done. Returns false when there is nothing to install, so the
+// The version downloaded and waiting to install, if any.
+export function readyUpdateVersion(): string | null {
+  return ready && supported() ? ready : null;
+}
+
+// The app's own Restart to update / Quit (tray menu or Settings) with an
+// update downloaded: show the progress window, start the installer and quit.
+// With `restart`, the installer reopens the app once it is done; without it
+// the app stays closed. Returns false when there is nothing to install, so the
 // caller quits normally.
 //
 // Other ways the app ends (signing out, shutting down) still install silently
 // through autoInstallOnAppQuit: a window would be pointless there.
-export function installUpdateOnQuit(): boolean {
+export function installUpdateOnQuit(restart: boolean): boolean {
   if (!ready || !supported()) return false;
-  showUpdateProgress(ready);
-  autoUpdater.quitAndInstall(true, true);
+  showUpdateProgress(ready, restart);
+  autoUpdater.quitAndInstall(true, restart);
   return true;
 }
 
