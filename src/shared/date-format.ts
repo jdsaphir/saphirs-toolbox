@@ -19,6 +19,14 @@ export function isoWeek(d: Date): number {
   return 1 + Math.round((diff / 86400000 - 3 + ((firstThursday.getUTCDay() + 6) % 7)) / 7);
 }
 
+// The year an ISO 8601 week belongs to: the year of that week's Thursday. It
+// differs from the calendar year around New Year (Dec 28, 2026 is in 2026's
+// Week 53, and so is Jan 3, 2027).
+export function isoWeekYear(d: Date): number {
+  const thursday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 3 - ((d.getDay() + 6) % 7));
+  return thursday.getFullYear();
+}
+
 // Local YYYY-MM-DD (avoids the UTC shift of Date.toISOString()).
 export function toIsoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

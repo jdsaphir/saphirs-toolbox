@@ -270,7 +270,9 @@ export const AGENT_TOOLS: AgentTool[] = [
     description:
       'Copy the unfinished to-dos of one day to another day (created if needed): every to-do that is not done, canceled, deferred or a comment. ' +
       'To-dos the destination already has (same text) are skipped. By default the originals are then flagged "deferred". ' +
-      'Fails without changing anything if the destination does not have enough free rows.',
+      'Fails without changing anything if the destination does not have enough free rows. ' +
+      '(The user works the other way round by hand: they flag to-dos "deferred", then the app\'s "+ New card for tomorrow" copies the deferred ones to a new day. ' +
+      'So deferred to-dos on a day usually already exist on a later day.)',
     inputSchema: object({
       from: { type: 'string', description: 'Day to copy from (YYYY-MM-DD, "yesterday", …).' },
       to: { type: 'string', description: 'Day to copy to. Defaults to today.' },
