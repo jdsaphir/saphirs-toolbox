@@ -177,7 +177,9 @@ $timer.Add_Tick({
     }
   }
 
-  if ($script:phase -ne 'failed' -and $elapsed.TotalMinutes -gt 10) { $script:phase = 'failed' }
+  # Give up only while the update is still under way; once it has landed
+  # ('starting' or 'done'), let it finish.
+  if ($script:phase -in 'closing', 'installing' -and $elapsed.TotalMinutes -gt 10) { $script:phase = 'failed' }
   if ($script:phase -eq 'failed' -and -not $close.Visible) {
     $timer.Stop()
     $bar.Visible = $false
