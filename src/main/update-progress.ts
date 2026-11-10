@@ -97,6 +97,16 @@ function Get-AppProcesses {
   })
 }
 
+# The app itself, reopened: its main process. MCP bridges run this same
+# executable (as plain Node, with the bridge script) and Chromium helpers carry
+# a --type= switch, so neither counts as the app being back.
+function Get-AppMain {
+  @(Get-CimInstance Win32_Process | Where-Object {
+    $_.ExecutablePath -and [string]::Equals($_.ExecutablePath, $AppExe, [System.StringComparison]::OrdinalIgnoreCase) -and
+    $_.CommandLine -and -not $_.CommandLine.Contains('mcp-stdio') -and -not $_.CommandLine.Contains('--type=')
+  })
+}
+
 function Get-Installer {
   @(Get-Process -Name 'SaphirsToolbox-*-setup' -ErrorAction SilentlyContinue)
 }
@@ -145,7 +155,7 @@ $timer.Add_Tick({
     'starting' {
       $since = ((Get-Date) - $script:doneAt).TotalSeconds
       # The installer starts the app itself; start it here only if it didn't.
-      if (@(Get-AppProcesses).Count -gt 0) {
+      if (@(Get-AppMain).Count -gt 0) {
         if ($since -gt 2) { $form.Close() }
       } elseif ($since -gt 10) {
         Start-Process -FilePath $AppExe
@@ -209,6 +219,8 @@ export function showUpdateProgress(targetVersion: string): void {
         TOOLBOX_UPDATE_EXE: process.execPath,
       },
     });
+    // A launch failure arrives here, not in the catch below.
+    child.on('error', err => console.error('[autoUpdater] could not show the update window:', err));
     child.unref();
   } catch (err) {
     console.error('[autoUpdater] could not show the update window:', err);
