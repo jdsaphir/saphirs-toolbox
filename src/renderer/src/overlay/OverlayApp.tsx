@@ -13,6 +13,7 @@ import { DraggableWindow } from './DraggableWindow';
 import { formatSheetTitle, parseIsoDate } from '../../../shared/date-format';
 import { applyTimerAction, type TimerAction } from '../../../shared/timer-actions';
 import type { SheetSummary } from './SheetsDropdown';
+import { carryDeferred, type NewCardTarget } from '../../../shared/card-history';
 
 type ToolId = 'calculator' | 'timer' | 'calendar' | 'worldclock' | 'agent' | 'settings' | null;
 
@@ -195,6 +196,21 @@ export const OverlayApp: React.FC = () => {
     const list = await api.listSheets();
     setSheets(list);
   }
+  // "+ New card for today / tomorrow / Monday": a dated card, which (except
+  // for today's) starts with the deferred (>) to-dos of today's card.
+  async function createSheetFor(target: NewCardTarget) {
+    await flushPersist();
+    let created = await api.createSheet({ title: formatSheetTitle(parseIsoDate(target.iso)), displayDate: target.iso });
+    if (target.copyDeferredFrom) {
+      const fromId = (await api.listSheets()).find(s => s.displayDate === target.copyDeferredFrom)?.id;
+      const from = fromId !== undefined ? await api.getSheet(fromId) : null;
+      if (from && from.todos.some(t => t.deferred && t.text.trim())) {
+        created = await api.updateSheet({ ...created, todos: carryDeferred(from.todos) });
+      }
+    }
+    setSheet(created);
+    setSheets(await api.listSheets());
+  }
   async function deleteSheet(id: number) {
     await api.deleteSheet(id);
     const list = await api.listSheets();
@@ -349,6 +365,7 @@ export const OverlayApp: React.FC = () => {
       onChange={persistSheet}
       onSelectSheet={selectSheet}
       onCreateSheet={createSheet}
+      onCreateSheetFor={createSheetFor}
       onDeleteSheet={deleteSheet}
     />
   );

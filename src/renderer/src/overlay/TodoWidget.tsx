@@ -4,6 +4,7 @@ import { parseDateInput, prettyDate } from '../../../shared/date-format';
 import type { CheckboxInteractionMode, Sheet, TodoItem } from '../../../shared/types';
 import { Checkbox, StatusPalette } from './Checkbox';
 import { SheetsDropdown, SheetSummary } from './SheetsDropdown';
+import type { NewCardTarget } from '../../../shared/card-history';
 
 interface Props {
   sheet: Sheet;
@@ -12,11 +13,12 @@ interface Props {
   onChange: (s: Sheet) => void;
   onSelectSheet: (id: number) => void;
   onCreateSheet: () => void;
+  onCreateSheetFor: (target: NewCardTarget) => void;
   onDeleteSheet: (id: number) => void;
 }
 
 export const TodoWidget: React.FC<Props> = ({
-  sheet, sheets, checkboxMode, onChange, onSelectSheet, onCreateSheet, onDeleteSheet,
+  sheet, sheets, checkboxMode, onChange, onSelectSheet, onCreateSheet, onCreateSheetFor, onDeleteSheet,
 }) => {
   const [dateInput, setDateInput] = useState(sheet.title);
   const [palette, setPalette] = useState<{ idx: number; anchor: HTMLElement } | null>(null);
@@ -62,7 +64,7 @@ export const TodoWidget: React.FC<Props> = ({
       <div className="widget-header">
         <span className="title">To-do</span>
         <div className="actions">
-          <button ref={sheetsBtnRef} className="ghost icon" title="Sheets" onClick={() => setSheetsOpen(o => !o)}>≡</button>
+          <button ref={sheetsBtnRef} className="ghost icon" title="Cards" onClick={() => setSheetsOpen(o => !o)}>≡</button>
         </div>
       </div>
       {sheetsOpen && sheetsBtnRef.current && (
@@ -72,12 +74,13 @@ export const TodoWidget: React.FC<Props> = ({
           activeId={sheet.id}
           onSelect={id => { setSheetsOpen(false); onSelectSheet(id); }}
           onCreate={() => { setSheetsOpen(false); onCreateSheet(); }}
+          onCreateFor={t => { setSheetsOpen(false); onCreateSheetFor(t); }}
           onDelete={id => onDeleteSheet(id)}
           onClose={() => setSheetsOpen(false)}
         />
       )}
       <div className="todo-date-row">
-        <button className="nav-btn ghost" onClick={goPrev} disabled={sheetIdx < 0 || sheetIdx === sheets.length - 1} title={sheetIdx < 0 || sheetIdx === sheets.length - 1 ? 'No older sheet' : 'Older sheet'}>‹</button>
+        <button className="nav-btn ghost" onClick={goPrev} disabled={sheetIdx < 0 || sheetIdx === sheets.length - 1} title={sheetIdx < 0 || sheetIdx === sheets.length - 1 ? 'No older card' : 'Older card'}>‹</button>
         <input
           className="date-input"
           type="text"
@@ -90,7 +93,7 @@ export const TodoWidget: React.FC<Props> = ({
         <div className="date-display" title={prettyDate(sheet.displayDate) || undefined}>
           {prettyDate(sheet.displayDate) || <span style={{ opacity: 0.6 }}>Type a date</span>}
         </div>
-        <button className="nav-btn ghost" onClick={goNext} disabled={sheetIdx <= 0} title={sheetIdx <= 0 ? 'No newer sheet' : 'Newer sheet'}>›</button>
+        <button className="nav-btn ghost" onClick={goNext} disabled={sheetIdx <= 0} title={sheetIdx <= 0 ? 'No newer card' : 'Newer card'}>›</button>
       </div>
       <div className="todo-list">
         {sheet.todos.map((t, i) => (

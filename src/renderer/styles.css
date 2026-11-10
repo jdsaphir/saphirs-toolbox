@@ -985,7 +985,30 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 3px; }
 .sheets-dropdown .sheet-item .label-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sheets-dropdown .sheet-item .del { color: var(--danger); font-size: 14px; padding: 0 4px; opacity: 0; }
 .sheets-dropdown .sheet-item:hover .del { opacity: 1; }
-.sheets-dropdown .new-sheet { color: var(--accent); border-top: 1px solid var(--border); margin-top: 4px; padding-top: 8px; }
+.sheets-dropdown .new-sheet { color: var(--accent); }
+.sheets-dropdown .cards-divider { border-top: 1px solid var(--border); margin: 4px 0; }
+.sheets-dropdown .card-group-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  color: var(--text-dim, inherit);
+  user-select: none;
+}
+.sheets-dropdown .card-group-head:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
+.sheets-dropdown .card-group-head:hover { background: rgba(120, 170, 230, 0.15); }
+.sheets-dropdown .card-group-head .caret { width: 10px; font-size: 10px; opacity: 0.8; }
+.sheets-dropdown .card-group-head .label-text { flex: 1; min-width: 0; }
+.sheets-dropdown .card-group-head .count { font-size: 11px; opacity: 0.6; }
+.sheets-dropdown .card-group-body { margin-left: 10px; padding-left: 6px; border-left: 1px solid var(--border); }
 
 /* ───────────────────────────────── Misc ──────────────────────────────────── */
 

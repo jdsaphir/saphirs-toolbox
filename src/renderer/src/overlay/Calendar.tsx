@@ -110,8 +110,8 @@ export const Calendar: React.FC<Props> = ({ weekStart, sheets, activeDate, onPic
               if (datesWithSheet.has(iso)) classes.push('has-sheet');
               if (activeDate && iso === activeDate) classes.push('selected');
               const title = datesWithSheet.has(iso)
-                ? 'Open task list'
-                : `Create task list for ${formatSheetTitle(cell)}`;
+                ? 'Open card'
+                : `Create card for ${formatSheetTitle(cell)}`;
               return (
                 <button
                   key={iso}

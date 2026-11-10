@@ -1,17 +1,18 @@
 # Saphir's Toolbox
 
-A floating utility companion for Windows. A small dolphin button hovers over every window; click it (or press a global shortcut) to expand a compact widget toolbox: a daily to-do sheet, a scratchpad, and an extensible toolbar of mini-tools (calculator, timer, calendar, world clock, settings).
+A floating utility companion for Windows. A small dolphin button hovers over every window; click it (or press a global shortcut) to expand a compact widget toolbox: a daily to-do card, a scratchpad, and an extensible toolbar of mini-tools (calculator, timer, calendar, world clock, settings).
 
 ## Features
 
 - **Floating dolphin** — always-on-top, draggable, persists its position.
 - **Global shortcut** — default `Ctrl+Alt+Space`. Configurable in settings.
 - **Toolbox overlay** — transparent screen overlay; widgets cluster near the dolphin and the toolbar grows in the direction of more screen space.
-- **To-do sheets** — 18 rows per sheet, with rich checkbox states (in progress, done, meeting, deferred, delegated, important, comment, optional, personal, follow-up, canceled, and reserved states for future use). Drag rows to reorder.
+- **To-do cards** — 18 rows per card, with rich checkbox states (in progress, done, meeting, deferred, delegated, important, comment, optional, personal, follow-up, canceled, and reserved states for future use). Drag rows to reorder.
 - **Date header** — type any date in the title (e.g. `5/12/2026`) and it displays as "Tuesday, May 12th, 2026 (Week 20)".
-- **Sheet history** — unlimited sheets, navigated with `‹ ›` or the sheets dropdown.
+- **Card history** — unlimited cards, navigated with `‹ ›` or the cards dropdown. The dropdown always lists this week's and last week's cards; older ones fold into a collapsible year → week tree (ISO weeks), and undated cards sit in their own group. Open groups are remembered.
+- **New card shortcuts** — the dropdown offers **+ New card for today** until today has a card, then **+ New card for tomorrow** (plus **for Monday** when tomorrow is a weekend day). Those start with today's deferred (`>`) to-dos, packed at the top with their markers, minus deferred, progress and canceled. **+ New card** makes an empty, undated card.
 - **Notes** — two Markdown pads beside the to-do list, each with its own edit/preview toggle and `.md` open/save. Links in the preview open in your default browser or mail app, and links to files or folders (`C:\notes\plan.md`, `file:///…`) open in their default app (wrap paths with spaces in `<…>`). Links to programs, scripts, installers and shortcuts, to network shares, and relative links are ignored:
-  - **Day Notes** — belongs to the displayed sheet, so every day has its own notes.
+  - **Day Notes** — belongs to the displayed card, so every day has its own notes.
   - **Scratchpad** — permanent; stays the same whichever day is displayed.
 - **Calculator** — basic arithmetic with keyboard support.
 - **Calendar** — month grid with ISO week numbers; click a date to open its task list (or create one on the spot). Dates that already have a list are marked with a dot, and a "Today" button jumps back to the current month. Week start (Sunday/Monday) is configurable in settings.
