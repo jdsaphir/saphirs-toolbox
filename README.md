@@ -122,6 +122,8 @@ Installed (NSIS) builds check for updates via `electron-updater`: on launch, and
 
 An MCP bridge is the app's own executable run as plain Node, started from the install folder by whichever AI client connected to it. The client keeps it alive after the app quits, and Windows won't let the installer delete a running `.exe`, so both ends close those leftovers before the old version is removed: `build/installer.nsh` in the installer, and `closeLeftoverBridges()` in `src/main/updater.ts` on the way out. Clients start a fresh bridge on their next call. The installer closes bridges right away but gives the app's own processes up to 90 seconds to close on their own before force-closing what's left (waiting up to 150 seconds more): on some PCs, killing the app's GPU process mid-shutdown leaves it stuck for minutes, holding the files.
 
+Every install, update and uninstall appends a few timestamped lines to `%TEMP%\saphirs-toolbox-install.log`: how it was started, how long the app took to close, whether the old version came out, and what the Add/Remove Programs entry says at the end. Updates run silently, so that log is the place to look when one goes wrong.
+
 ## Stack
 
 - Electron 33 (main + preload + two renderer windows: dolphin and overlay)
